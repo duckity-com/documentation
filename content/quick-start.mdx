@@ -1,0 +1,63 @@
+---
+title: Quick Start
+description: Learn how to use Duckity in some minutes.
+icon: Zap
+---
+
+Getting started with Duckity is quite simple. Head over to
+[Duckity's Dashboard](https://app.duckity.com/) and log in using your favorite method. If it's your
+first time logging in, your account will be automatically created.
+
+If it's your first time logging into Duckity, your dashboard will be empty.
+
+![Screenshot](/images/screenshot-dashboard-empty.png)
+
+## Applications
+
+Duckity is divided into one or more applications within your account. You create one application
+per project in which you want to integrate Duckity. To create a new application, press on the
+yellow **+ New Application** button at the top right corner of the screen.
+
+![Screenshot](/images/screenshot-dashboard-create-application.png)
+
+Once you've set the name of it, press on the **✓ Create Application** button. Congratulations! You
+now have your first application created.
+
+![Screenshot](/images/screenshot-dashboard-application.png)
+
+Each application has a credentials pair consisting of:
+
+- **Application ID**: The unique identifier of your app.
+- **Application Secret**: Your app's "password". As the name implies, keep it secret.
+
+Additionally, in case your application is a web app, you can set up the CORS origins to fit your
+application's origins. For example, if you'll be protecting the login form of your app hosted at
+`https://example.com/login`, add `https://example.com` (scheme and host, no path) to your app's
+origins. If your application is not a web app, you can leave the CORS origins empty.
+
+## Protection Profiles
+
+Applications commonly have multiple features that need to be protected. For example, you may have a
+signup form and a login form with different protection needs. For each, you'll create one
+**protection profile** with settings tuned to each feature's specific needs.
+
+Each application needs at least one protection profile to work. To create your first one, press the
+**+ Create Protection Profile** button.
+
+![Screenshot](/images/screenshot-dashboard-create-protection-profile.png)
+
+Set the name to the name of the feature you'll be protecting, like "Sign-up Form" or "Add Friend".
+This is for you to recognize it later, it won't be displayed to your users. Once you're done
+filling it, press on **✓ Create Protection Profile**. 
+
+Congrats! Your first protection profile is now created. You'll see a lot of configuration options,
+but don't worry; We'll go one by one explaining them below.
+
+![Screenshot](/images/screenshot-dashboard-protection-profile.png)
+
+### Throttling Windows
+
+The first of all settings a protection profile has are the throttling windows. Throttling windows
+rate-limit challenge issuance.
+
+![Screenshot](/images/screenshot-dashboard-throttling-windows.png)
