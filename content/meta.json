@@ -1,0 +1,17 @@
+{
+    "pages": [
+        "---Introduction---",
+        "index",
+        "quick-start",
+        "---[BookOpenText]Guides---",
+        "guides/tune-a-protection-profile",
+        "guides/write-your-own-sdk",
+        "---[CodeXml]Integrate---",
+        "sdks/javascript",
+        "sdks/react",
+        "sdks/c",
+        "sdks/python",
+        "sdks/rust-std",
+        "sdks/rust-no-std"
+    ]
+}

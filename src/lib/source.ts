@@ -1,6 +1,7 @@
 import { docs } from "collections/server";
 import { loader } from "fumadocs-core/source";
-import { icons } from "lucide-react";
+import { icons as lucide } from "lucide-react";
+import * as simple from "@icons-pack/react-simple-icons";
 import { createElement } from "react";
 import { docsContentRoute, docsImageRoute, docsRoute } from "./shared";
 
@@ -15,7 +16,10 @@ export const source = loader({
       return;
     }
 
-    if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
+    if (icon in lucide)
+      return createElement(lucide[icon as keyof typeof lucide]);
+    if (icon in simple)
+      return createElement(simple[icon as keyof typeof simple]);
   },
 });
 

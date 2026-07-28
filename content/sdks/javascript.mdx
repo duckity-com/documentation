@@ -1,0 +1,137 @@
+---
+title: JavaScript (Client-Side)
+description: Learn how to integrate Duckity into your web application.
+icon: SiJavascript
+---
+
+Welcome to the Duckity JavaScript + WASM SDK documentation! This guide will teach you how to
+install and set up the SDK in no time.
+
+The following SDKs depend on this one and provide specialized wrappers for different frameworks:
+
+import { SiReact } from "@icons-pack/react-simple-icons";
+
+<Cards>
+  <Card href="/sdks/react" title="React" icon={<SiReact />}>
+    Integrate client-side code with Duckity using the React SDK.
+  </Card>
+</Cards>
+
+## Quick Start
+
+Before you can integrate Duckity into your application, you'll need to have the following:
+
+1. An application,
+2. CORS origins set up pointing to your application's origin(s),
+3. At least one protection profile created in that application, and
+4. The ID of the protection profiles to use
+
+If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
+read the [Quick Start](/quick-start) guide to learn how to set those up.
+
+Once you got those ready, follow these steps to get things running on your client:
+
+### Install the SDK [step]
+
+Follow these steps depending on your application:
+
+<Tabs items={["Installed", "Via CDN"]}>
+  <Tab>
+    Run the following line in your terminal to install the Duckity SDK.
+
+    ```package-install
+    @duckity/js
+    ```
+
+    Then import it in your code:
+
+    ```ts twoslash
+    import duckity from "@duckity/js";
+    ```
+
+  </Tab>
+  <Tab>
+    If you're using the SDK from a static site, import it using a CDN like [esm.sh](https://esm.sh/)
+    instead.
+
+    ```html
+    <script type="module">
+      // Using esm.sh
+      import duckity from "https://esm.sh/@duckity/js";
+
+      // Using jsdelivr.net
+      import duckity from "https://cdn.jsdelivr.net/npm/@duckity/js";
+
+      // Using UNPKG
+      import duckity from "https://unpkg.com/@duckity/js";
+    </script>
+    ```
+
+  </Tab>
+</Tabs>
+
+### Solve a Challenge [step]
+
+Once you have the SDK installed, you can request a challenge whenever you need it using
+`duckity.solve()`.
+
+```ts twoslash
+const PROTECTION_PROFILE_ID: string = "";
+// ---cut---
+import duckity from "@duckity/js";
+
+let solution = await duckity.solve(PROTECTION_PROFILE_ID);
+```
+
+<Callout title="TIP">
+  Hover over the code to see the type definitions.
+</Callout>
+
+## Advanced Usage
+
+Solving a challenge on request works well for simple setups. However, both security and UX can be
+greatly improved changing a few settings and planning when to solve challenges.
+
+If your challenges do not require threat correlation keys (set up in the protection profile's
+settings), issue the challenge as soon as possible. Note, however, that the challenge 
+
+### Threat Correlation Keys
+
+To pass threat correlation keys when issuing a challenge, set them in the `options` argument of
+`duckity.solve()`.
+
+```ts twoslash
+const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
+// ---cut---
+import duckity from "@duckity/js";
+
+let solution = await duckity.solve(
+  PROTECTION_PROFILE_ID,
+  { 
+    keys: {
+      email: "john@duckity.com",
+    }
+  }
+);
+```
+
+### Using On Self-Hosted Ducklings
+
+Self-hosted ducklings are hosted at a different domain from Duckity-hosted ducklings. To point it
+to a custom domain, change the following setting:
+
+```ts twoslash
+const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
+// ---cut---
+import duckity from "@duckity/js";
+
+let solution = await duckity.solve(
+  PROTECTION_PROFILE_ID,
+  { 
+    api: "https://quack.duckity.com",
+  }
+);
+```
+
+The default value for the `api` parameter is `"https://quack.duckity.com"`, which points to
+Duckity's hosted duckling. Change the domain name to your

@@ -4,9 +4,9 @@ const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
-  serverExternalPackages: ["@takumi-rs/core"],
+  serverExternalPackages: ["@takumi-rs/core", "typescript", "twoslash"],
   output: "export",
-  reactStrictMode: false,
+  reactStrictMode: true,
   allowedDevOrigins: ["duckity.com"],
   basePath: "/docs",
   trailingSlash: true,

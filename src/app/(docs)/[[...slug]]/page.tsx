@@ -58,7 +58,7 @@ export async function generateMetadata(
   if (!page) notFound();
 
   return {
-    title: page.data.title,
+    title: page.data.title + " · Duckity Docs",
     description: page.data.description,
     openGraph: {
       images: getPageImageUrl(page).url,

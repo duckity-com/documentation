@@ -8,34 +8,24 @@ Getting started with Duckity is quite simple. Head over to
 [Duckity's Dashboard](https://app.duckity.com/) and log in using your favorite method. If it's your
 first time logging in, your account will be automatically created.
 
-If it's your first time logging into Duckity, your dashboard will be empty.
-
-![Screenshot](/images/screenshot-dashboard-empty.png)
-
-## Applications
+## Create an Application [step]
 
 Duckity is divided into one or more applications within your account. You create one application
 per project in which you want to integrate Duckity. To create a new application, press on the
 yellow **+ New Application** button at the top right corner of the screen.
 
-![Screenshot](/images/screenshot-dashboard-create-application.png)
-
 Once you've set the name of it, press on the **✓ Create Application** button. Congratulations! You
 now have your first application created.
 
-![Screenshot](/images/screenshot-dashboard-application.png)
+<Callout>
+  Additionally, in case your application is a web app, you can set up the CORS
+  origins to fit your application's origins. For example, if you'll be
+  protecting the login form of your app hosted at `https://example.com/login`,
+  add `https://example.com` (scheme and host, no path) to your app's origins. If
+  your application is not a web app, you can leave the CORS origins empty.
+</Callout>
 
-Each application has a credentials pair consisting of:
-
-- **Application ID**: The unique identifier of your app.
-- **Application Secret**: Your app's "password". As the name implies, keep it secret.
-
-Additionally, in case your application is a web app, you can set up the CORS origins to fit your
-application's origins. For example, if you'll be protecting the login form of your app hosted at
-`https://example.com/login`, add `https://example.com` (scheme and host, no path) to your app's
-origins. If your application is not a web app, you can leave the CORS origins empty.
-
-## Protection Profiles
+## Create a Protection Profile [step]
 
 Applications commonly have multiple features that need to be protected. For example, you may have a
 signup form and a login form with different protection needs. For each, you'll create one
@@ -44,20 +34,66 @@ signup form and a login form with different protection needs. For each, you'll c
 Each application needs at least one protection profile to work. To create your first one, press the
 **+ Create Protection Profile** button.
 
-![Screenshot](/images/screenshot-dashboard-create-protection-profile.png)
-
 Set the name to the name of the feature you'll be protecting, like "Sign-up Form" or "Add Friend".
 This is for you to recognize it later, it won't be displayed to your users. Once you're done
-filling it, press on **✓ Create Protection Profile**. 
+filling it, press on **✓ Create Protection Profile**.
 
-Congrats! Your first protection profile is now created. You'll see a lot of configuration options,
-but don't worry; We'll go one by one explaining them below.
+Copy your protection profile's ID using the button at the top right corner, that's all you'll need
+to integrate it into your application.
 
-![Screenshot](/images/screenshot-dashboard-protection-profile.png)
+<Callout>
+  Don't worry about all the settings displayed for now, you'll learn to tune
+  them later.
+</Callout>
 
-### Throttling Windows
+## Install an SDK [step]
 
-The first of all settings a protection profile has are the throttling windows. Throttling windows
-rate-limit challenge issuance.
+To integrate your protection profile with your application, you'll need a client-side SDK and a
+server-side SDK.
 
-![Screenshot](/images/screenshot-dashboard-throttling-windows.png)
+Duckity has multiple official SDKs for you to plug and play.
+
+import {
+  SiC,
+  SiJavascript,
+  SiPython,
+  SiRust,
+  SiReact,
+} from "@icons-pack/react-simple-icons";
+
+<Cards>
+  <Card href="/sdks/javascript" title="JavaScript" icon={<SiJavascript />}>
+    Integrate client-side code with Duckity using the JavaScript SDK.
+  </Card>
+  <Card href="/sdks/react" title="React" icon={<SiReact />}>
+    Integrate client-side code with Duckity using the React SDK.
+  </Card>
+  <Card href="/sdks/c" title="C" icon={<SiC />}>
+    Integrate client-side code with Duckity using the C SDK.
+  </Card>
+  <Card href="/sdks/python" title="Python 3" icon={<SiPython />}>
+    Integrate client-side code with Duckity using the Python SDK.
+  </Card>
+  <Card href="/sdks/rust-std" title="Rust (STD)" icon={<SiRust />}>
+    Integrate client-side code with Duckity using the Rust SDK. Uses GMP via
+    `rug`.
+  </Card>
+  <Card href="/sdks/rust-no-std" title="Rust (No STD)" icon={<SiRust />}>
+    Integrate client-side code with Duckity using the Rust SDK. Uses
+    `num-bigint-dig`.
+  </Card>
+</Cards>
+
+In case we don't have a client SDK for your language yet, you can use the C SDK. It's written in
+Rust, you can link to it through the exposed C API, and it wraps all the required encoding and
+decoding in a simple API. You may also find the following guide useful:
+
+import { FileCodeCorner } from "lucide-react";
+
+<Card
+  title="Write Your Own SDK"
+  icon={<FileCodeCorner />}
+  href="/guides/write-your-own-sdk"
+>
+  Learn how to write your own SDK in any language.
+</Card>
