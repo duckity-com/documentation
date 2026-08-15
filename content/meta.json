@@ -12,6 +12,7 @@
         "sdks/c",
         "sdks/python",
         "sdks/rust-std",
-        "sdks/rust-no-std"
+        "sdks/rust-no-std",
+        "sdks/go"
     ]
 }

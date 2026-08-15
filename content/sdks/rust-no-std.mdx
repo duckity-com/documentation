@@ -2,3 +2,86 @@
 title: Rust (No STD)
 icon: SiRust
 ---
+
+Welcome to the Rust (no STD) SDK documentation! This crate does not require the standard library to
+compile. It's considerably slower than the STD-enabled SDK, up to x4 slower. If you can use the STD
+crate, choose it.
+
+## Quick Start
+
+Before you can integrate Duckity into your application, you'll need to have the following:
+
+1. An application,
+2. At least one protection profile created in that application, and
+3. The ID of the protection profile(s) to use
+
+If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
+read the [Quick Start](/quick-start) guide to learn how to set those up.
+
+Once you got those ready, follow these steps to get things running on your client:
+
+### Install the SDK [step]
+
+To install the SDK in your project, run the following command in your shell:
+
+```sh
+cargo install duckity-core
+```
+
+### Get a Challenge [step]
+
+This crate does not include utilities to fetch challenges. To get a challenge, make a POST HTTP
+request like the following:
+
+```http
+GET /v1/challenges/{protection-profile-id}/issue HTTP/1.1
+Host: quack.duckity.com
+Accept: application/json
+Content-Type: application/json
+
+{}
+```
+
+In case you want to specify threat correlation keys, pass them in the object under `keys`, as
+follows:
+
+```json
+{
+    "keys": {
+        "key1": "val1",
+        "key2": "val2"
+    }
+}
+```
+
+The response on success will look like follows:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-RateLimit-Next-In: 1000
+X-RateLimit-Resets-In: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Penalty-Resets-In: 0
+
+{
+    "challenge": "<challenge-string>"
+}
+```
+
+### Solve a Challenge [step]
+
+Once you have a challenge string, use the following methods to solve a challenge:
+
+```rs
+fn main() {
+    let original = String::from("<your-challenge-token>");
+
+    let challenge = duckity_core::decode(&original).unwrap();
+    let solution = duckity_core::solve(&challenge);
+    let solution = duckity_core::encode(&original, &solution).unwrap();
+}
+```
+
+`duckity_core::solve()` is CPU-intensive, take appropriate measures if it may block concurrent
+processing (e.g. a UI thread).
