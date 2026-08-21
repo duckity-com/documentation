@@ -7,7 +7,7 @@ const config = {
   serverExternalPackages: ["@takumi-rs/core", "typescript", "twoslash"],
   output: "export",
   reactStrictMode: true,
-  allowedDevOrigins: ["duckity.com"],
+  allowedDevOrigins: ["duckity.com", "duckity.dev"],
   basePath: "/docs",
   trailingSlash: true,
   images: {
