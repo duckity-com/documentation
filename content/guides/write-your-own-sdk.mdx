@@ -2,3 +2,609 @@
 title: Write Your Own SDK
 description: Learn to write your own Duckity SDK, for when an official one is not yet available.
 ---
+
+This guide will guide you through writing your own SDK for Duckity in any language. We'll use
+examples for JavaScript and Python, taken from the official SDKs, so you can use as reference to
+make one in any language of your choice.
+
+## Getting a Challenge [step]
+
+Duckity serves challenges through the duckling API. It's separate from the management API running on
+a specialized backend. The hosted endpoint of such version is at `https://api.duckity.com/d1`.
+Subsequent versions of this API will be named `d2`, `d3`, and so on.
+
+To get a challenge, you need to be able to make HTTP requests and a protection profile ID. Requests
+to get challenges look like follows:
+
+```http
+POST /d1/challenges/{protection_profile_id}/issue HTTP/1.1
+Host: api.duckity.com
+Accept: application/json
+X-Duckity-CSRF: 1
+```
+
+The `X-Duckity-CSRF` header is required to enforce CORS preflight in web browsers and prevent CSRF.
+Requests will be rejected with a `400 Bad Request` error if it's not set. Any value is valid for it.
+
+The response will look like this:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Access-Control-Allow-Origin: https://example.com
+Access-Control-Allow-Methods: POST
+Access-Control-Allow-Headers: X-Duckity-CSRF
+X-RateLimit-Next-In: 1000
+X-RateLimit-Resets-In: 1000
+X-RateLimit-Remaining: 0
+
+{
+    "challenge": "<challenge-string>"
+}
+```
+
+The headers returned are those that follow:
+
+| Name                            | Description                                                                                                                            | Value Type         | Present When                                                                                           |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------ |
+| `Access-Control-Allow-Origin`   | The CORS origin, set to the value of the request's `Origin` header if present and valid.                                               | HTTP URL           | `Origin` is present in the request and matches one of the configured CORS origins for the application. |
+| `Access-Control-Allow-Methods`  | The allowed methods for the endpoint. Only `POST` is listed, `OPTIONS` is implicit.                                                    | HTTP method list   | `Origin` is present in the request and matches one of the configured CORS origins for the application. |
+| `X-RateLimit-Next-In`           | The amount of time to wait until a new request is added to the client's available quota.                                               | Milliseconds       | Always                                                                                                 |
+| `X-RateLimit-Resets-In`         | The amount of time to wait for the requests quota to be fully reset.                                                                   | Milliseconds       | Always                                                                                                 |
+| `X-RateLimit-Remaining`         | The amount of requests remaining in the client's current quota after this request.                                                     | Amount of requests | Always                                                                                                 |
+| `X-RateLimit-Penalty-Resets-In` | The amount of time to wait for the penalty to be lifted, if any. This does not equal the amount of time to wait to make a new request. | Milliseconds       | The client is currently penalized.                                                                     |
+
+When the client has made too many requests, the response will instead be an error:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+X-RateLimit-Next-In: 1000
+X-RateLimit-Resets-In: 1000
+X-RateLimit-Remaining: 0
+X-RateLimit-Penalty-Resets-In: 500
+
+{
+    "title": "Too Many Requests",
+    "message": "You've made too many requests. Try again later."
+}
+```
+
+Other errors, like an invalid protection profile, will result in a response of similar body
+structure and with the corresponding status code.
+
+## Decoding the Challenge [step]
+
+Challenge strings have two sections separated by a dot. The first section is the challenge's data,
+the second section is a signature to prevent tampering.
+
+```
+<challenge-data>.<challenge-signature>
+```
+
+Both sections are URL-safe Base64 strings with no padding. To read the challenge data, decode the
+Base64 string and parse the JSON inside it. The decoded JSON will have the following structure:
+
+```ts lineNumbers
+type Challenge = {
+    challenge_id: string; // The challenge's unique ID. 21-character NanoID using the default alphabet.
+    ip: string; // The IP of the client the challenge was issued for. Only this client may submit a solution for validation.
+    timestamp: number; // The milliseconds since UNIX epoch when the challenge was issued.
+    protection_profile_id: string; // The ID of the protection profile this challenge was issued for. 21-character NanoID using the default alphabet.
+    n: number[]; // An array of 32-bit unsigned digits, most significant digit first. The Wesolowski VDF N parameter.
+    x: number[]; // An array of 32-bit unsigned digits, most significant digit first. The Wesolowski VDF X parameter.
+    t: number; // The Wesolowski VDF T parameter.
+};
+```
+
+These code pieces implement the decoding as a reference.
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        interface Challenge {
+            // The challenge's unique ID.
+            challenge_id: string;
+            // The client's IP.
+            ip: string;
+            // The unix timestamp, in milliseconds, in which the challenge was issued.
+            timestamp: number;
+            // The ID of the protection profile this challenge was issued for.
+            protection_profile_id: string;
+            // The unsigned 32-bit digits of the N Wesolowski VDF parameter, most significant digit first.
+            n: number[];
+            // The unsigned 32-bit digits of the X Wesolowski VDF parameter, most significant digit first.
+            x: number[];
+            // The T Wesolowski VDF parameter.
+            t: number;
+        }
+
+        /**
+         * Extracts the challenge's data from the string.
+         *
+         * @param challenge The raw challenge string.
+         * @returns The decoded challenge metadata.
+         */
+        export function decode(challenge: string): Challenge {
+            // Counts all dots in the challenge string
+            if (![1, 2].includes((challenge.match(/\./g) || []).length)) {
+                throw Error("The challenge string contained too many or not enough sections.");
+            }
+
+            let [base64, _signature] = challenge.split(".", 2);
+            let json = atob(base64 as string);
+            let data: Challenge = JSON.parse(json as string);
+
+            return data;
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        import base64, json
+
+        from dataclasses import dataclass
+
+
+        @dataclass
+        class Challenge:
+            id: str
+            """The challenge's unique ID."""
+            ip: str
+            """The IP of the client this challenge was issued for."""
+            timestamp: int
+            """The UNIX timestamp in milliseconds at which this challenge was issued."""
+            protection_profile_id: str
+            """The ID of the protection profile this challenge was issued for."""
+            n: list[int]
+            """The unsigned 32-bit digits of the N Wesolowski VDF parameter, most significant digit first."""
+            x: list[int]
+            """The unsigned 32-bit digits of the X Wesolowski VDF parameter, most significant digit first."""
+            t: int
+            """The T Wesolowski VDF parameter."""
+
+
+        def decode(challenge: str) -> Challenge:
+            """Decodes a challenge string into its data.
+
+            Arguments:
+                challenge (str): The raw challenge string received from the duckling API.
+
+            Returns:
+                Challenge: The challenge's decoded data.
+
+            Raises:
+                ValueError: The challenge string was not valid.
+            """
+
+            if challenge.count(".") not in [2, 3]:
+                raise ValueError("The challenge string contained too many or not enough parts.")
+
+            raw = challenge.split(".", 1)
+            raw = raw[0]
+
+            # Readds padding for decoding
+            data = base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
+            data = json.loads(data)
+
+            try:
+                return Challenge(
+                    id=data["challenge_id"],
+                    ip=data["ip"],
+                    timestamp=data["timestamp"],
+                    protection_profile_id=data["protection_profile_id"],
+                    n=data["n"],
+                    x=data["x"],
+                    t=data["t"]
+                )
+            except KeyError as e:
+                raise ValueError("The decoded challenge data was incomplete.") from e
+        ```
+    </Tab>
+
+</Tabs>
+
+## Solving the Challenge [step]
+
+Solving challenges is relatively simple. It does, however, require to implement a few utility
+functions by hand. Some libraries, like GMP, provide optimized versions of these functions. The
+Python examples will show how to use GMP via the `gmpy2` library. The TypeScript examples will show
+how to implement all of these functions by hand using JavaScript's `bigint`. In JavaScript, bigints
+are written like normal `number`s with the `n` prefix, e.g. `1n`.
+
+### Convert Digits to Integers [step]
+
+The N and X challenge parameters are encoded as arrays of 32-bit unsigned digits. To be able to
+operate on those numbers comfortably and efficiently, we first have to parse those digits.
+
+The algoritm is simple. Start with `result = 0`, then for every digit in the array do
+`result = (result << 32) | digit`. The following pseudocode displays it simply:
+
+```
+function getIntegerFromDigits(digits: number[]):
+    result = 0
+
+    for digit in digits:
+        result = (result << 32) | digit
+
+    return result
+```
+
+Easy. Then we can use that function on both X and N. The following examples show actual code
+implementations of such function:
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        /**
+         * Converts an array of u32 digits to a bigint.
+         *
+         * @param digits The digits of the bigint, MSF.
+         * @returns The formed bigint.
+         */
+        function getBigintFromDigits(digits: number[]): bigint {
+            let result = 0n;
+
+            for (const digit of digits) {
+                result = (result << 32n) | BigInt(digit);
+            }
+
+            return result;
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        # Your life will be brighter if you install `gmpy2-stubs` as a dev dependency, `gmpy2` does
+        # not have typing stubs integrated, therefore no IDE autocompletion nor help.
+        import gmpy2
+
+
+        def get_mpz_from_digits(digits: list[int]) -> gmpy2.mpz:
+            """Converts a list of u32 digits to a `gmpy2.mpz`.
+
+            Arguments:
+                digits (list[int]): The unsigned 32-bit digits.
+
+            Returns:
+                gmpy2.mpz: The resulting GMP number.
+            """
+
+            return gmpy2.mpz.from_bytes(b"".join(i.to_bytes(4) for i in digits))
+        ```
+    </Tab>
+
+</Tabs>
+
+### Perform the Computation [step]
+
+Once we have our utility function to get numbers from digit arrays, we can perform the calculation
+that burns CPU cycles. The result of this step will later be used to compute a proof; Should this
+step be skipped, the proof will fail to validate.
+
+In plain English, the computation is simple: starting with `Y = X`, repeat `Y = Y^2 % N` `T` amount
+of times. In pseudocode:
+
+```
+y = x
+loop t times:
+    y = y**2 % n
+```
+
+`Y` will be our solution to the challenge.
+
+This step is not skippable given that it's effectively `X^2^T % N`. Since `T` is large and so is X,
+computing it in one operation is infeasible. For example, with `T = 1,000,000`, `2^T` has about
+301,030 decimal digits (1,000,001 bits). By using the algorithm above in a loop, we can get the
+result of the full computation without needing to build `2^T` nor `X^2^T` nor store it in memory.
+
+This step is also not parallelizable. Each iteration needs to know the result of the previous one,
+which leaves no advantage to GPUs. In code, this step would be
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        function solve(nDigits: number[], xDigits: number[], tNumber: number): bigint {
+            let n = getBigintFromDigits(nDigits);
+            let x = getBigintFromDigits(xDigits);
+            let y = x;
+
+            for (let i = 0; i < t; i++) {
+                y = y ** 2 % n;
+            }
+
+            return y;
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        import gmpy2
+
+
+        def solve(n: list[int], x: list[int], t: int) -> gmpy2.mpz:
+            n = get_mpz_from_digits(n)
+            x = get_mpz_from_digits(x)
+            y = x
+
+            for _ in range(t):
+                y = y**2 % n
+
+            return n
+        ```
+    </Tab>
+
+</Tabs>
+
+<Callout title="Solving in Async Contexts">
+    When solving a challenge in async contexts, this operation will block the runtime. To prevent
+    it, run the operation in a worker thread/process and wait for it to finish asynchronously.
+
+    In the JavaScript SDK, for example, solving the challenge is done in a web worker to prevent it
+    from blocking the UI.
+
+</Callout>
+
+### Proving the Solution (Z) [step]
+
+Now that we have our solution Y, let's make a proof we actually solved the problem. This will allow
+the server to validate our solution without having to do all the iterations again. If our solution
+happens to be invalid, the challenge will fail to validate to the server.
+
+Making a proof is divided into two parts: getting parameter L and getting parameter PI (our proof).
+PI depends on L, so lets get L first.
+
+To get L, we'll create an intermediate parameter Z which is the result of SHA-256-hashing the
+following parameters (in order):
+
+1. `duckity` as ASCII bytes,
+2. The challenge's `N` as 512 MSF bytes padded with 0s,
+3. The challenge's `X` as 512 MSF bytes padded with 0s,
+4. The challenge's `T` as 512 MSF bytes padded with 0s,
+5. Our `Y` as 512 MSF bytes padded with 0s.
+
+The result of hashing those parameters together will be 32 bytes, which will be our `Z` parameter.
+
+For this, we'll need a new function to convert our bigints to digits (bytes). The algorithm is
+simple, the inverse of what we used for our `getBigintFromDigits` or `get_mpz_from_digits` to decode
+`N` and `X` in the previous step. In pseudocode, it's
+
+```
+function getDigitsFromBigint(number: bigint, arrayWidth: number, digitByteWidth: number):
+    digits = [0] * arrayWidth
+
+    mask = 0;
+    loop digitByteWidth times:
+        mask = mask << 8
+        mask = mask | 0b1111_1111
+
+    for i in 0..arrayWidth:  # [0; arrayWidth), from 0 to arrayWidth - 1 inclusive.
+        digit = number & mask
+        digits[arrayWidth - 1 - i] = digit
+        number = number >> (digitByteWidth * 8)
+
+    return digits
+```
+
+In TypeScript and Python, that's
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        /**
+         * Converts a bigint into a MSF digit array.
+         * 
+         * @param number The bigint number to convert.
+         * @param arrayWidth The amount of digits to return, padded with 0s.
+         * @param digitByteWidth The amount of bytes each digit will carry.
+         * 
+         * @returns The digits array.
+         */
+        function getDigitsFromBigint(number: bigint, arrayWidth: number, digitByteWidth: number): number[] {
+            let digits: number[] = new Array(arrayWidth).fill(0);
+
+            let mask = 0n;
+            for (let i = digitByteWidth; i > 0; i--) {
+                mask <<= 8n;
+                mask |= 0b1111_1111n;
+            }
+
+            for (let i = digits - 1; i >= 0; i--) {
+                let digit = Number(number & mask);
+                digits[i] = digit;
+                number = number >> (digitByteWidth * 8);
+            }
+
+            return digits;
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        import gmpy2
+
+
+        def get_digits_from_mpz(number: gmpy2.mpz | int, array_width: int, digit_byte_width: int) -> list[int]:
+            """Converts a MPZ integer to its MSF digits.
+
+            Arguments:
+                number (gmpy2.mpz | int): The number to convert to digits.
+                array_width (int): The amount of digits to return, padded with 0s.
+                digit_byte_width (int): The amount of bytes each digit will carry.
+
+            Returns:
+                list[int]: The digits.
+            """
+
+            digits = [0] * array_width
+
+            mask = 0
+            for i in range(digit_byte_width):
+                mask <<= 8
+                mask |= 0b1111_1111
+
+            for i in range(array_width):
+                digit = number & mask
+                digits[array_width - 1 - i] = int(digit)
+                number >>= digit_byte_width * 8
+
+            return digits
+        ```
+    </Tab>
+
+</Tabs>
+
+Now that we have our bigint to digit converters, we can hash our values as described above.
+
+```
+hasher = SHA256()
+hasher.update("duckity")
+hasher.update(getDigitsFromBigint(n, 512, 1))
+hasher.update(getDigitsFromBigint(x, 512, 1))
+hasher.update(getDigitsFromBigint(t, 512, 1))
+hasher.update(getDigitsFromBigint(y, 512, 1))
+z = hasher.finish()
+```
+
+Easy. The following examples show how to do such thing in TypeScript and Python.
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        /**
+         * Hashes the provided parameters to get Z.
+         * 
+         * @param n The challenge's N param.
+         * @param x The challenge's X param.
+         * @param t The challenge's T param.
+         * @param y The computed Y param.
+         * 
+         * @returns Z as bytes.
+         */
+        async function getZ(n: bigint, x: bigint, t: bigint, y: bigint): number[] {
+            let bytes = Array.from(new TextEncoder().encode("duckity"));
+            bytes = bytes.concat(...getDigitsFromBigint(n, 512, 1));
+            bytes = bytes.concat(...getDigitsFromBigint(x, 512, 1));
+            bytes = bytes.concat(...getDigitsFromBigint(t, 512, 1));
+            bytes = bytes.concat(...getDigitsFromBigint(y, 512, 1));
+
+            let hash = await crypto.subtle.digest("SHA-256", new Uint8Array(bytes));
+            let z = Array.from(new Uint8Array(hash));
+
+            return z
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        import hashlib
+
+        import gmpy2
+
+
+        def get_z(n: gmpy2.mpz, x: gmpy2.mpz, t: int, y: gmpy2.mpz) -> list[int]:
+            """Hashes the provided parameters to get Z.
+
+            Arguments:
+                n (gmpy2.mpz): The challenge's N parameter.
+                x (gmpy2.mpz): The challenge's X parameter.
+                t (int): The challenge's T parameter.
+                y (gmpy2.mpz): The computed Y parameter.
+
+            Returns:
+                list[int]: Z as bytes.
+            """
+
+            hash = hashlib.sha256()
+            hash.update(b"duckity")
+            hash.update(get_digits_from_mpz(n, 512, 1))
+            hash.update(get_digits_from_mpz(x, 512, 1))
+            hash.update(get_digits_from_mpz(t, 512, 1))
+            hash.update(get_digits_from_mpz(y, 512, 1))
+            z = hash.digest()
+
+            return z
+        ```
+    </Tab>
+
+</Tabs>
+
+### Proving the Solution (L) [step]
+
+Getting `L` from `Z` involves interpreting our `Z` bytes as a big integer and getting the next prime
+using the Miller-Rabin algorithm.
+
+<Callout>
+    This section will explain how to do both, yet it's likely that you will find an existing library
+    for Miller-Rabin with an implementation you can use out of the box. If you choose to use such
+    library instead, make sure you test on exactly 40 bases.
+</Callout>
+
+For this, we'll have to update our previous `getBigintFromDigits` or `get_mpz_from_digits` to allow
+arbitrary digit sizes. That's simple, instead of hardcoding the digit size we'll pass it as an
+argument to the function. Our pseudocode will then look like
+
+```
+function getIntegerFromDigits(digits: number[], digit_byte_width: number):
+    result = 0
+
+    for digit in digits:
+        result = (result << (digit_byte_width * 8)) | digit
+
+    return result
+```
+
+In TypeScript and Python, that's
+
+<Tabs items={["TypeScript", "Python"]}>
+    <Tab value="TypeScript">
+        ```ts lineNumbers
+        /**
+         * Converts an array of digits to a bigint.
+         *
+         * @param digits The digits of the bigint, MSF.
+         * @param digitByteWidth The amount of bytes each digit carries.
+         * @returns The formed bigint.
+         */
+        function getBigintFromDigits(digits: number[], digitByteWidth: number): bigint {
+            let result = 0n;
+
+            for (const digit of digits) {
+                result = (result << (8n * BigInt(digitByteWidth))) | BigInt(digit);
+            }
+
+            return result;
+        }
+        ```
+    </Tab>
+    <Tab value="Python">
+        ```py lineNumbers
+        import gmpy2
+
+
+        def get_mpz_from_digits(digits: list[int], digit_byte_width: int) -> gmpy2.mpz:
+            """Converts a list digits to a `gmpy2.mpz`.
+
+            Arguments:
+                digits (list[int]): The unsigned digits.
+                digit_byte_width (int): The byte width each digit carries.
+
+            Returns:
+                gmpy2.mpz: The resulting GMP number.
+            """
+
+            return gmpy2.mpz.from_bytes(b"".join(i.to_bytes(digit_byte_width) for i in digits))
+        ```
+    </Tab>
+
+</Tabs>
+
+Then in our solving code, update the function calls to convert `N` and `X` to bigints with a byte
+width set to 4 bytes.
+
+Now let's interpret `Z` as a bigint. Since `Z` is currently the result of hashing our parameters
+together, each byte will be a single-byte digit.
+
+```
+z = getBigintFromDigits(z, 1)
+```
