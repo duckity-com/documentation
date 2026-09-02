@@ -45,7 +45,7 @@ Follow these steps depending on your application:
 
     Then import it in your code:
 
-    ```ts twoslash
+    ```ts
     import duckity from "@duckity/js";
     ```
 
@@ -75,7 +75,7 @@ Follow these steps depending on your application:
 Once you have the SDK installed, you can request a challenge whenever you need it using
 `duckity.solve()`.
 
-```ts twoslash
+```ts
 const PROTECTION_PROFILE_ID: string = "";
 // ---cut---
 import duckity from "@duckity/js";
@@ -100,19 +100,12 @@ settings), issue the challenge as soon as possible. Note, however, that the chal
 To pass threat correlation keys when issuing a challenge, set them in the `options` argument of
 `duckity.solve()`.
 
-```ts twoslash
+```ts
 const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
 // ---cut---
 import duckity from "@duckity/js";
 
-let solution = await duckity.solve(
-  PROTECTION_PROFILE_ID,
-  { 
-    keys: {
-      email: "john@duckity.com",
-    }
-  }
-);
+let solution = await duckity.solve(PROTECTION_PROFILE_ID);
 ```
 
 ### Using On Self-Hosted Ducklings
@@ -120,7 +113,7 @@ let solution = await duckity.solve(
 Self-hosted ducklings are hosted at a different domain from Duckity-hosted ducklings. To point it
 to a custom domain, change the following setting:
 
-```ts twoslash
+```ts
 const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
 // ---cut---
 import duckity from "@duckity/js";

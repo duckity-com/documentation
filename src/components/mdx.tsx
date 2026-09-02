@@ -1,6 +1,7 @@
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import * as TabsComponents from 'fumadocs-ui/components/tabs';
 import Image from "next/image";
+import { Mermaid } from '@/components/mermaid';
 import type { MDXComponents } from "mdx/types";
 import * as Twoslash from 'fumadocs-twoslash/ui';
 
@@ -10,6 +11,7 @@ export function getMDXComponents(components?: MDXComponents) {
     img: (props) => <Image {...(props as any)} />,
     ...TabsComponents,
     ...Twoslash,
+    Mermaid,
     ...components,
   } satisfies MDXComponents;
 }

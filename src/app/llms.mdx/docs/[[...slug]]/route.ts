@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/llms.mdx/doc
   });
 }
 
-export function generateStaticParams() {
+export function generateStaticParams(any?: any) {
   return source.getPages().map((page) => ({
     slug: getPageMarkdownUrl(page).segments,
   }));
