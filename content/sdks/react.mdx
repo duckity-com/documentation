@@ -2,3 +2,209 @@
 title: React
 icon: SiReact
 ---
+
+Welcome to the React SDK documentation! This is a wrapper over the JavaScript SDK for ease of use in
+React components. In case you're looking for the JavaScript SDK, head over to the JavaScript SDK
+guide.
+
+import { SiJavascript } from "@icons-pack/react-simple-icons";
+
+<Cards>
+    <Card href="/sdks/javascript" title="JavaScript" icon={<SiJavascript />}>
+        Integrate client and server-side code with Duckity using the JavaScript/TypeScript SDK.
+    </Card>
+</Cards>
+
+## Quick Start
+
+Before you can integrate Duckity into your application, you'll need to have the following:
+
+1. An application,
+2. CORS origins set up pointing to your application's origin(s),
+3. At least one protection profile created in that application, and
+4. The ID of the protection profiles to use
+
+If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
+read the [Quick Start](/quick-start) guide to learn how to set those up.
+
+Once you got those ready, follow these steps to get things running on your client:
+
+### Install the SDK [step]
+
+Run the following line in your terminal to install the Duckity SDK.
+
+```package-install
+@duckity/react
+```
+
+Then import the React hook in your code:
+
+```ts
+import { useChallenge } from "@duckity/react";
+```
+
+### Use the Hook [step]
+
+Use the hook as follows:
+
+<Tabs items={["Next.js", "Vite", "Remix", "Gatsby", "Expo Web", "Astro"]} groupId="react-framework" persist>
+    <Tab value="Next.js" id="nextjs">
+        ```ts
+        "use client";
+
+        import { useChallenge } from "@duckity/react";
+
+        function MyComponent() {
+            const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+    </Tab>
+    <Tab value="Vite" id="vite">
+        ```ts
+        import { useChallenge } from "@duckity/react";
+
+        function MyComponent() {
+            const duckity = useChallenge(import.meta.env.VITE_DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+    </Tab>
+    <Tab value="Remix" id="remix">
+        ```ts
+        import { json } from "@remix-run/node"; // Or cloudflare/deno
+        import { useLoaderData } from "@remix-run/react";
+        import { useChallenge } from "@duckity/react";
+
+        export async function loader() {
+            return json({
+                ENV: {
+                    DUCKITY_PROTECTION_PROFILE_ID: process.env.DUCKITY_PROTECTION_PROFILE_ID,
+                },
+            });
+        }
+
+        function MyComponent() {
+            const data = useLoaderData<typeof loader>();
+            const duckity = useChallenge(data.ENV.DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+    </Tab>
+    <Tab value="Gatsby" id="gatsby">
+        ```ts
+        import { useChallenge } from "@duckity/react";
+
+        function MyComponent() {
+            const duckity = useChallenge(process.env.GATSBY_DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+    </Tab>
+    <Tab value="Expo Web" id="expo-web">
+        ```ts
+        import { useChallenge } from "@duckity/react";
+
+        function MyComponent() {
+            const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+    </Tab>
+    <Tab value="Astro" id="astro">
+        ```ts
+        import { useChallenge } from "@duckity/react";
+
+        function MyComponent() {
+            const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+        }
+        ```
+
+        This is a client component, so use it as follows when rendering it:
+
+        ```tsx
+        <MyComponent client:load />
+        ```
+    </Tab>
+
+</Tabs>
+
+When the component is first rendered, it'll start fetching and solving a challenge.
+
+### Get a Challenge Solution [step]
+
+`useChallenge()` returns an object with multiple properties and functions to help you react to state
+changes. Reading the solution is doable in two different ways.
+
+1. Reading `useChallenge().solution: string | undefined`, and
+2. Calling `useChallenge().wait(): Promise<string>`.
+
+Most of the time, you'll likely want to call `useChallenge().wait()`.
+
+```tsx
+import { SubmitEvent } from "react";
+import { useChallenge } from "@duckity/react";
+
+function MyComponent() {
+    const duckity = useChallenge(...);
+
+    async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
+        e.preventDefault();
+
+        const solution: string = await duckity.wait();
+
+        // Submit the form to your backend.
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <input required placeholder="Email" type="email" />
+            <input required placeholder="Password" type="Password" />
+            <button type="submit">Log In</button>
+        </form>
+    )
+}
+```
+
+In case you need to submit more than one solution (e.g. because the user can perform multiple
+protected actions without reloading the page), call `duckity.refresh()` once you have used the
+solution token. It will fetch a new challenge and solve it in the background.
+
+## `UseChallengeResult`
+
+Setting up the hook and calling `wait()` works well for simple setups. However, once your component
+scales, you may want to use the rest of the properties returned by `useChallenge()`.
+
+<TypeTable
+    type={{
+        refresh: {
+            description:
+                "Discards the current challenge solution and solves a new challenge. Note that if the challenge is currently being fetched or solved, calling this function will not stop the ongoing process and the solution still will be set once that solving the challenge completes.",
+            type: "function",
+            returns: "void",
+            required: true,
+        },
+        wait: {
+            description: "Waits until a challenge solution is available and returns it.",
+            type: "function",
+            returns: "Promise<string>",
+            required: true,
+        },
+        status: {
+            description: "The current status of the challenge hook.",
+            type: '"solving" | "solved" | "error"',
+            required: true,
+        },
+        solution: {
+            description: "The encoded solution string, if any.",
+            type: "string",
+        },
+        error: {
+            description: "An error, if any occurred while fetching or solving a challenge.",
+            type: "any",
+        },
+    }}
+/>
+
+## Contributing & License
+
+All contributions are welcome to the SDK. Whether it's bug fixes, suggestions, new features,
+documentation updates, or fixing a typo, if you think you can make this SDK better, feel free to
+make a pull request in the [GitHub repository](https://github.com/duckity-com/sdks).
+
+This SDK is licensed under the permissive MIT License, and so will be all contributions to the SDK.

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Mermaid } from '@/components/mermaid';
 import type { MDXComponents } from "mdx/types";
 import * as Twoslash from 'fumadocs-twoslash/ui';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -12,6 +13,7 @@ export function getMDXComponents(components?: MDXComponents) {
     ...TabsComponents,
     ...Twoslash,
     Mermaid,
+    TypeTable,
     ...components,
   } satisfies MDXComponents;
 }

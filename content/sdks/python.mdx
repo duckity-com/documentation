@@ -2,3 +2,450 @@
 title: Python 3
 icon: SiPython
 ---
+
+Welcome to the Duckity Python SDK documentation! This guide will teach you how to install and set up
+the SDK in no time.
+
+The SDK is async-first. To call it from synchronous code, wrap the calls in `asyncio.run()` or your
+event loop's version of it.
+
+<Callout>
+    All SDKs are fully compatible with each other. Solution tokens generated in one SDK will be
+    validated just fine in other SDKs, including this one.
+</Callout>
+
+## Quick Start
+
+Before you can integrate Duckity into your application, you'll need to have the following:
+
+1. An application,
+2. At least one protection profile created in that application, and
+3. The ID of the protection profiles to use
+
+If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
+read the [Quick Start](/quick-start) guide to learn how to set those up.
+
+Once you got those ready, follow these steps to get things running on your client:
+
+### Install the SDK [step]
+
+Install the SDK from PyPI using your favorite package manager:
+
+{/* prettier-ignore */}
+<Tabs items={["pip", "uv", "poetry"]} groupId="python-package-manager" persist>
+    <Tab value="pip" id="pip">
+        ```sh
+        pip install duckity
+        ```
+    </Tab>
+    <Tab value="uv" id="uv">
+        ```sh
+        uv add duckity
+        ```
+    </Tab>
+    <Tab value="poetry" id="poetry">
+        ```sh
+        poetry add duckity
+        ```
+    </Tab>
+</Tabs>
+
+### Solve a Challenge [step]
+
+Solving a challenge only requires a protection profile ID.
+
+<Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
+    <Tab value="Async" id="async">
+        ```py
+        import duckity
+
+        solution: str = await duckity.solve(PROTECTION_PROFILE_ID)
+        ```
+
+        The CPU-intensive part of solving the challenge is done in a `ProcessPoolExecutor()`.
+        Neither the GIL nor the async event loop will be blocked.
+    </Tab>
+    <Tab value="Sync" id="sync">
+        ```py
+        import asyncio
+
+        import duckity
+
+        solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+        ```
+
+        The CPU-intensive part of solving the challenge is done in a `ProcessPoolExecutor()`. The
+        GIL will not be blocked.
+    </Tab>
+
+</Tabs>
+
+### Validate a Solution [step]
+
+Validation is done server-side. You can send the solution token to your server any way you want; A
+JSON field or an HTTP header is usually convenient.
+
+To validate a solution token, you'll need 4 things:
+
+1. The solution token,
+2. The IP of the client that submitted the solution,
+3. The application's secret, and
+4. The protection profile's ID.
+
+Once you have them, you can validate a solution token as follows:
+
+<Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
+    <Tab value="Async" id="async">
+        ```py
+        import duckity
+
+        solution: str
+        client_ip: str
+        application_secret: str
+        protection_profile_id: str
+
+        is_valid: bool = await duckity.validate(
+            solution, client_ip, application_secret, protection_profile_id
+        )
+        ```
+    </Tab>
+    <Tab value="Sync" id="sync">
+        ```py
+        import asyncio
+
+        import duckity
+
+        solution: str
+        client_ip: str
+        application_secret: str
+        protection_profile_id: str
+
+        is_valid: bool = asyncio.run(
+            duckity.validate(solution, client_ip, application_secret, protection_profile_id)
+        )
+        ```
+    </Tab>
+
+</Tabs>
+
+That's it! If the solution token is valid, you can proceed to process your request. If it's not,
+return an error to the client and do not further process the request.
+
+## Advanced Usage
+
+Solving a challenge on demand works well for simple setups. However, UX can be greatly improved
+changing a few settings and planning when to solve challenges.
+
+### Asynchronous Challenge Solving
+
+The challenge does not need to wait for the user to finish filling up a form or completing an action
+to be issued. When you can guess the user will need a solution token, it is a good idea to start
+computing it before the user needs it.
+
+For example, if the user is logging in to a backend service via a CLI, you can fetch and solve a
+challenge while the user is filling up their username and password. For example:
+
+```py
+import asyncio
+
+import getpass
+
+import duckity
+
+
+async def login():
+    solution_task = asyncio.create_task(duckity.solve(PROTECTION_PROFILE_ID))
+
+    email = await asyncio.to_thread(input, "Enter your email: ")
+    password = await asyncio.to_thread(getpass.getpass, "Enter your password (hidden): ")
+
+    print("Logging you in...")
+
+    solution = await solution_task
+
+    # Log the user in here...
+
+
+asyncio.run(login())
+```
+
+## Integrations
+
+Duckity's Python SDK works anywhere out of the box. These examples show how to integrate it to some
+common frameworks and tools.
+
+### FastAPI
+
+```py lineNumbers
+import os
+
+import dotenv
+
+import duckity
+
+from fastapi import FastAPI, Request, HTTPException
+
+from pydantic import BaseModel
+
+
+dotenv.load_dotenv(override=True)
+
+
+PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
+
+
+app = FastAPI()
+
+
+class RequestBodySchema(BaseModel):
+    solution: str
+
+
+@app.post("/protected")
+async def protected(request: Request, payload: RequestBodySchema):
+    is_valid = await duckity.validate(
+        payload.solution,
+        request.client.host,  # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+        APPLICATION_SECRET,
+        PROTECTION_PROFILE_ID
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail="The provided solution token was invalid.",
+        )
+
+    return {
+        "message": "This is protected!"
+    }
+```
+
+### Flask
+
+```py lineNumbers
+import os
+
+import dotenv
+
+import duckity
+
+from flask import Flask, request, jsonify
+
+
+dotenv.load_dotenv(override=True)
+
+
+app = Flask(__name__)
+
+
+PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
+
+
+@app.post("/protected")
+async def protected():
+    solution = request.json.get("solution")
+
+    if not solution:
+        return jsonify({"error": "Missing solution"}), 400
+
+    client_ip = request.remote_addr  # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+
+    is_valid = await duckity.validate(
+        solution,
+        client_ip,
+        APPLICATION_SECRET,
+        PROTECTION_PROFILE_ID,
+    )
+
+    if not is_valid:
+        return jsonify({"error": "Invalid solution"}), 403
+
+    return jsonify({"message": "This is protected!"})
+```
+
+### Django
+
+```py lineNumbers
+import json
+
+import duckity
+
+from django.conf import settings
+from django.http import JsonResponse
+
+
+async def protected(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"detail": "Method not allowed."},
+            status=405,
+        )
+
+    try:
+        body = json.loads(request.body)
+        solution = body["solution"]
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return JsonResponse(
+            {"detail": "Invalid request body."},
+            status=400,
+        )
+
+    # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+    client_ip = request.META["REMOTE_ADDR"]
+
+    is_valid = await duckity.validate(
+        solution,
+        client_ip,
+        settings.DUCKITY_APPLICATION_SECRET,
+        settings.DUCKITY_PROTECTION_PROFILE_ID,
+    )
+
+    if not is_valid:
+        return JsonResponse(
+            {"detail": "The provided solution token was invalid."},
+            status=400,
+        )
+
+    return JsonResponse({
+        "message": "This is protected!"
+    })
+```
+
+### Django Ninja
+
+```py lineNumbers
+from ninja import NinjaAPI, Schema
+from ninja.errors import HttpError
+
+from django.conf import settings
+
+
+api = NinjaAPI()
+
+
+class RequestBodySchema(Schema):
+    solution: str
+
+
+@api.post("/protected")
+async def protected(request, payload: RequestBodySchema):
+    # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+    client_ip = request.META["REMOTE_ADDR"]
+
+    is_valid = await duckity.validate(
+        payload.solution,
+        client_ip,
+        settings.DUCKITY_APPLICATION_SECRET,
+        settings.DUCKITY_PROTECTION_PROFILE_ID,
+    )
+
+    if not is_valid:
+        raise HttpError(400, "The provided solution token was invalid.")
+
+    return {
+        "message": "This is protected!"
+    }
+```
+
+### Django Rest Framework
+
+```py lineNumbers
+import duckity
+
+from django.conf import settings
+
+from rest_framework import serializers, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+
+class RequestBodySerializer(serializers.Serializer):
+    solution = serializers.CharField()
+
+
+class ProtectedView(APIView):
+    async def post(self, request):
+        serializer = RequestBodySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+        client_ip = request.META["REMOTE_ADDR"]
+
+        is_valid = await duckity.validate(
+            serializer.validated_data["solution"],
+            client_ip,
+            settings.DUCKITY_APPLICATION_SECRET,
+            settings.DUCKITY_PROTECTION_PROFILE_ID,
+        )
+
+        if not is_valid:
+            return Response(
+                {"detail": "The provided solution token was invalid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({"message": "This is protected!"})
+```
+
+### Strawberry
+
+```py lineNumbers
+import os
+
+import dotenv
+
+import duckity
+
+import strawberry
+
+
+dotenv.load_dotenv(override=True)
+
+
+PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
+
+
+@strawberry.type
+class Query:
+    pass
+
+
+@strawberry.type
+class ProtectedResource:
+    message: str
+
+
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    async def protected(self, info: strawberry.Info, solution: str) -> ProtectedResource:
+        # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
+        client_ip = info.context["request"].META["REMOTE_ADDR"]
+
+        is_valid = await duckity.validate(
+            solution,
+            client_ip,
+            DUCKITY_APPLICATION_SECRET,
+            DUCKITY_PROTECTION_PROFILE_ID,
+        )
+
+        if not is_valid:
+            raise Exception("The provided solution was not valid.")
+
+        return ProtectedResource(message="This is protected!")
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation)
+```
+
+## Contributing & License
+
+All contributions are welcome to the SDK. Whether it's bug fixes, suggestions, new features,
+documentation updates, or fixing a typo, if you think you can make this SDK better, feel free to
+make a pull request in the [GitHub repository](https://github.com/duckity-com/sdks).
+
+This SDK is licensed under the permissive MIT License, and so will be all contributions to the SDK.

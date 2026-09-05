@@ -1,0 +1,364 @@
+---
+title: Rust
+icon: SiRust
+---
+
+Welcome to the Rust SDK documentation! This guide will teach you how to install and set up the SDK
+in no time.
+
+This SDK uses `reqwest`, which depends on Tokio. If you want to use a different async runtime,
+you'll have to disable the `std` feature of the crate and implement your own interactions with the
+Duckling API. Note that disabling the `std` feature still requires a global allocator.
+
+This crate also has full documentation available at [docs.rs/duckity](https://docs.rs/duckity) plus
+all the type introspection that this document does not provide. It may be useful to check that out
+in case you want to use the `core` module later on.
+
+## Quick Start
+
+Before you can integrate Duckity into your application, you'll need to have the following:
+
+1. An application,
+2. At least one protection profile created in that application, and
+3. The ID of the protection profiles to use
+
+If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
+read the [Quick Start](/quick-start) guide to learn how to set those up.
+
+Once you got those ready, follow these steps to get things running on your client:
+
+### Install the SDK [step]
+
+Run the following cargo command in your terminal to add the `duckity` crate to your project:
+
+```sh
+cargo add duckity
+```
+
+### Solve a Challenge [step]
+
+To get and solve a challenge, use `duckity::solve()` like follows:
+
+```rs
+let solution: str = duckity::solve(PROTECTION_PROFILE_ID).await?;
+```
+
+That's it! Once you have your solution token, you can send it over to your backend for validation.
+
+<Callout>
+    The CPU-intensive part of solving the challenge is done in a separate thread via
+    `tokio::task::spawn_blocking()`. Your async runtime will not be blocked.
+</Callout>
+
+### Validate a Challenge [step]
+
+Validation is done server-side. You can send the solution token to your server any way you want; A
+JSON field or an HTTP header is usually convenient.
+
+To validate a solution token, you'll need 4 things:
+
+1. The solution token,
+2. The IP of the client that submitted the solution,
+3. The application's secret, and
+4. The protection profile's ID.
+
+Once you have them, you can validate a solution token as follows:
+
+```rs
+let is_valid: bool = duckity::validate(
+    solution,
+    client_ip,
+    APPLICATION_SECRET,
+    PROTECTION_PROFILE_ID
+)
+.await?;
+```
+
+That's it! If the solution token is valid, you can proceed to process your request. If it's not,
+return an error to the client and do not further process the request.
+
+## Advanced Usage
+
+Solving a challenge on demand works well for simple setups. However, UX can be greatly improved by
+planning when to solve challenges. Additionally, you can access the low-level APIs in the
+`duckity::core::` module to customize your processing of the challenges.
+
+### Asynchronous Challenge Solving
+
+The challenge does not need to wait for the user to finish filling up a form or completing an action
+to be issued. When you can guess the user will need a solution token, it is a good idea to start
+computing it before the user needs it.
+
+For example, if the user is logging in to a backend service via a CLI, you can fetch and solve a
+challenge while the user is filling up their username and password. For example:
+
+```rs
+use std::io::{self, Write};
+
+const PROTECTION_PROFILE_ID: &str = "<your-own-protection-profile-id>";
+
+struct Credentials {
+    email: String,
+    password: String,
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let solution_task = tokio::spawn(duckity::solve(PROTECTION_PROFILE_ID).into_future());
+
+    let credentials = tokio::task::spawn_blocking(|| {
+        let mut email = String::new();
+        let mut password = String::new();
+
+        print!("Enter your email: ");
+        io::stdout().flush()?;
+        io::stdin().read_line(&mut email)?;
+
+        print!("Enter your password: ");
+        io::stdout().flush()?;
+        io::stdin().read_line(&mut password)?;
+
+        anyhow::Ok(Credentials { email, password })
+    })
+    .await??;
+
+    let solution = solution_task.await??;
+
+    Ok(())
+}
+```
+
+### `duckity::core::` Module
+
+This module is available even without the `std` feature. It contains all the internals that
+`duckity::solve()` uses to decode, solve, and encode challenges and solutions, and is useful when
+you want to read challenge metadata or customize the way challenges are solved.
+
+The three functions provided by this module are the following:
+
+1. `duckity::core::decode(&str) -> Result<Challenge, duckity::core::DuckityDecodeError>`
+2. `duckity::core::solve(&Challenge) -> Solution`
+3. `duckity::core::encode(&str, &Solution) -> Result<String, duckity::core::DuckityEncodeError>`
+
+Additionally, two struct types are provided:
+
+1. `Challenge`
+2. `Solution`
+
+The `Challenge` struct contains 2 public fields and 1 method:
+
+- `Challenge::id` - The challenge's unique ID.
+- `Challenge::ip` - The IP of the client this challenge was issued for. `IpAddr` under the `std`
+  feature flag, `String` when it's disabled.
+- `Challenge::hardness()` - The hardness of the challenge.
+
+The `Solution` struct is opaque. It can only be passed to `duckity::core::encode()` for encoding
+into a solution token.
+
+### Using a Different Async Runtime
+
+You can customize the asynchronous runtime by disabling the `std` feature flag and implementing the
+fetching and validating yourself. The decoding, solving, and encoding functions are all provided
+inside the `duckity::core::` module and are still available without the `std` feature flag under
+environments with `alloc`.
+
+The [`async-compat`](//docs.rs/async-compat) crate may make migration to another runtime extremely
+simple. For example, the following snippet shows how to solve and validate a challenge with
+[`smol`](//docs.rs/smol).
+
+```rs
+use async_compat::CompatExt;
+
+const PROTECTION_PROFILE_ID: &str = "<insert-your-protection-profile-here>";
+
+fn main() -> anyhow::Result<()> {
+    smol::block_on(async {
+        let solution = duckity::solve(PROTECTION_PROFILE_ID).into_future().compat().await?;
+
+        Ok(())
+    })
+}
+```
+
+## Integrations
+
+This SDK integrates easily with multiple frameworks and libraries. The following examples show how
+to integrate with a few common libraries.
+
+### Axum
+
+```rs lineNumbers
+use std::net::SocketAddr;
+
+use axum::extract::ConnectInfo;
+use axum::response::IntoResponse;
+use axum::{Json, Router, routing};
+use reqwest::StatusCode;
+use serde::Deserialize;
+use tokio::net::TcpListener;
+
+// In an actual application, make these two configurable. `clap` is a good tool for that.
+const APPLICATION_SECRET: &str = "<your-application-secret>";
+const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+
+#[tokio::main]
+async fn main() {
+    let router = Router::new().route("/protected", routing::post(handler));
+
+    let listener = TcpListener::bind("0.0.0.0:8000").await.unwrap();
+
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
+}
+
+#[derive(Deserialize)]
+struct ProtectedRequestPayload {
+    solution: String,
+}
+
+async fn handler(
+    // If behind a reverse proxy, use X-Forwarded-For instead. Make sure it's not spoofable.
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(payload): Json<ProtectedRequestPayload>,
+) -> impl IntoResponse {
+    let is_valid = duckity::validate(
+        payload.solution,
+        addr.ip(),
+        APPLICATION_SECRET,
+        PROTECTION_PROFILE_ID,
+    )
+    .await
+    .unwrap();
+
+    if is_valid {
+        (StatusCode::OK, Json("This is protected!"))
+    } else {
+        (
+            StatusCode::BAD_REQUEST,
+            Json("The provided solution token was invalid."),
+        )
+    }
+}
+```
+
+### Warp
+
+```rs lineNumbers
+use std::convert::Infallible;
+use std::net::SocketAddr;
+
+use serde::Deserialize;
+use warp::{Filter, Reply};
+
+// In an actual application, make these two configurable. `clap` is a good tool for that.
+const APPLICATION_SECRET: &str = "<your-application-secret>";
+const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+
+#[tokio::main]
+async fn main() {
+    let protected = warp::path("protected")
+        .and(warp::post())
+        .and(warp::addr::remote())
+        .and(warp::body::json::<ProtectedRequestPayload>())
+        .and_then(handler);
+
+    warp::serve(protected)
+        .run(([0, 0, 0, 0], 8000))
+        .await;
+}
+
+#[derive(Deserialize)]
+struct ProtectedRequestPayload {
+    solution: String,
+}
+
+async fn handler(
+    // If behind a reverse proxy, use X-Forwarded-For instead. Make sure it cannot be spoofed.
+    addr: Option<SocketAddr>,
+    payload: ProtectedRequestPayload,
+) -> Result<impl Reply, Infallible> {
+    let addr = addr.expect("remote address unavailable");
+
+    let is_valid = duckity::validate(
+        payload.solution,
+        addr.ip(),
+        APPLICATION_SECRET,
+        PROTECTION_PROFILE_ID,
+    )
+    .await
+    .unwrap();
+
+    if is_valid {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&"This is protected!"),
+            warp::http::StatusCode::OK,
+        ))
+    } else {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&"The provided solution token was invalid."),
+            warp::http::StatusCode::BAD_REQUEST,
+        ))
+    }
+}
+```
+
+### Actix Web
+
+```rs lineNumbers
+use std::net::SocketAddr;
+
+use actix_web::web::Json;
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, post};
+use serde::Deserialize;
+
+// In an actual application, make these two configurable. `clap` is a good tool for that.
+const APPLICATION_SECRET: &str = "<your-application-secret>";
+const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| App::new().service(protected))
+        .bind(("0.0.0.0", 8000))?
+        .run()
+        .await
+}
+
+#[derive(Deserialize)]
+struct ProtectedRequestPayload {
+    solution: String,
+}
+
+#[post("/protected")]
+async fn protected(req: HttpRequest, payload: Json<ProtectedRequestPayload>) -> impl Responder {
+    // If behind a reverse proxy, use X-Forwarded-For instead.
+    // Make sure it cannot be spoofed.
+    let addr: SocketAddr = req.peer_addr().expect("remote address unavailable");
+
+    let is_valid = duckity::validate(
+        payload.solution.clone(),
+        addr.ip(),
+        APPLICATION_SECRET,
+        PROTECTION_PROFILE_ID,
+    )
+    .await
+    .unwrap();
+
+    if is_valid {
+        HttpResponse::Ok().json("This is protected!")
+    } else {
+        HttpResponse::BadRequest().json("The provided solution token was invalid.")
+    }
+}
+```
+
+## Contributing & License
+
+All contributions are welcome to the SDK. Whether it's bug fixes, suggestions, new features,
+documentation updates, or fixing a typo, if you think you can make this SDK better, feel free to
+make a pull request in the [GitHub repository](https://github.com/duckity-com/sdks).
+
+This SDK is licensed under the permissive MIT License, and so will be all contributions to the SDK.

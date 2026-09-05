@@ -1,20 +1,20 @@
 ---
-title: JavaScript (Client-Side)
+title: JavaScript
 description: Learn how to integrate Duckity into your web application.
 icon: SiJavascript
 ---
 
-Welcome to the Duckity JavaScript + WASM SDK documentation! This guide will teach you how to
-install and set up the SDK in no time.
+Welcome to the Duckity JavaScript SDK documentation! This guide will teach you how to install and
+set up the SDK in no time.
 
 The following SDKs depend on this one and provide specialized wrappers for different frameworks:
 
 import { SiReact } from "@icons-pack/react-simple-icons";
 
 <Cards>
-  <Card href="/sdks/react" title="React" icon={<SiReact />}>
-    Integrate client-side code with Duckity using the React SDK.
-  </Card>
+    <Card href="/sdks/react" title="React" icon={<SiReact />}>
+        Integrate client-side code with Duckity using the React SDK.
+    </Card>
 </Cards>
 
 ## Quick Start
@@ -36,38 +36,37 @@ Once you got those ready, follow these steps to get things running on your clien
 Follow these steps depending on your application:
 
 <Tabs items={["Installed", "Via CDN"]}>
-  <Tab>
-    Run the following line in your terminal to install the Duckity SDK.
+    <Tab>
+        Run the following line in your terminal to install the Duckity SDK.
 
-    ```package-install
-    @duckity/js
-    ```
+        ```package-install
+        @duckity/js
+        ```
 
-    Then import it in your code:
+        Then import it in your code:
 
-    ```ts
-    import duckity from "@duckity/js";
-    ```
+        ```ts
+        import * as duckity from "@duckity/js";
+        ```
+    </Tab>
+    <Tab>
+        If you're using the SDK from a static site, import it using a CDN like
+        [esm.sh](https://esm.sh/) instead.
 
-  </Tab>
-  <Tab>
-    If you're using the SDK from a static site, import it using a CDN like [esm.sh](https://esm.sh/)
-    instead.
+        ```html
+        <script type="module">
+            // Using esm.sh
+            import * as duckity from "https://esm.sh/@duckity/js";
 
-    ```html
-    <script type="module">
-      // Using esm.sh
-      import duckity from "https://esm.sh/@duckity/js";
+            // Using jsdelivr.net
+            import * as duckity from "https://cdn.jsdelivr.net/npm/@duckity/js";
 
-      // Using jsdelivr.net
-      import duckity from "https://cdn.jsdelivr.net/npm/@duckity/js";
+            // Using UNPKG
+            import * as duckity from "https://unpkg.com/@duckity/js";
+        </script>
+        ```
+    </Tab>
 
-      // Using UNPKG
-      import duckity from "https://unpkg.com/@duckity/js";
-    </script>
-    ```
-
-  </Tab>
 </Tabs>
 
 ### Solve a Challenge [step]
@@ -76,55 +75,110 @@ Once you have the SDK installed, you can request a challenge whenever you need i
 `duckity.solve()`.
 
 ```ts
-const PROTECTION_PROFILE_ID: string = "";
-// ---cut---
 import duckity from "@duckity/js";
 
-let solution = await duckity.solve(PROTECTION_PROFILE_ID);
+/// Slow! Runs in a web worker, yet don't let it block code below unless necessary.
+let solution: string = await duckity.solve(PROTECTION_PROFILE_ID);
 ```
 
-<Callout title="TIP">
-  Hover over the code to see the type definitions.
-</Callout>
+### Validate a Challenge [step]
+
+Send the solution token to your backend server any way you want. A header or parameter in a JSON
+field will work.
+
+Once in the server, you'll need the client's IP, their submitted solution token, the protection
+profile's ID, and the application secret.
+
+```ts
+import * as duckity from "@duckity/js";
+
+let applicationSecret: string;
+let protectionProfileId: string;
+let clientIp: string;
+let solution: string;
+
+let isValid = await duckity.validate(solution, clientIp, applicationSecret, protectionProfileId);
+
+if (isValid) {
+    // Keep processing the request.
+} else {
+    // Return an error to the client.
+}
+```
+
+That's it! Now Duckity is protecting your endpoint. You can customize the behavior in the
+[Duckity Dashboard](https://app.duckity.com).
 
 ## Advanced Usage
 
-Solving a challenge on request works well for simple setups. However, both security and UX can be
-greatly improved changing a few settings and planning when to solve challenges.
+Solving a challenge on request works well for simple setups. However, UX can be greatly improved
+changing a few settings and planning when to solve challenges.
 
-If your challenges do not require threat correlation keys (set up in the protection profile's
-settings), issue the challenge as soon as possible. Note, however, that the challenge 
+### Asynchronous Challenge Solving
 
-### Threat Correlation Keys
+The challenge does not need to wait for the user to finish filling up a form or completing an action
+to be issued. When you can guess the user will need a solution token, it is a good idea to start
+computing it before the user needs it.
 
-To pass threat correlation keys when issuing a challenge, set them in the `options` argument of
-`duckity.solve()`.
+For example, if the user opens a login page, you can infer the user will need a challenge solved to
+be able to attempt to log in. You can solve a challenge beforehand so that the user does not need to
+wait.
 
-```ts
-const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
-// ---cut---
-import duckity from "@duckity/js";
+```html
+<!doctype html>
+<html>
+    <head>
+        <style>
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <form id="form">
+            <input name="email" />
+            <input name="password" />
+            <button type="submit" id="submit-button">Log In</button>
+            <div id="submit-loading" class="hidden">Logging you in...</div>
+        </form>
+        <script type="module">
+            import * as duckity from "https://esm.sh/@duckity/js";
 
-let solution = await duckity.solve(PROTECTION_PROFILE_ID);
+            const PROTECTION_PROFILE_ID = "<your-protection-profile-id>";
+
+            const form = document.getElementById("form");
+            const submitButton = document.getElementById("submit-button");
+            const submitLoading = document.getElementById("submit-loading");
+
+            // A Promise<string>, it will solve a challenge in the background while the user logs
+            // in. Do not `await` it here, it will prevent the `form.addEventListener()` call from
+            // running until the challenge is solved, which takes some time.
+            let solutionPromise = duckity.solve(PROTECTION_PROFILE_ID);
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                submitButton.classList.add("hidden");
+                submitLoading.classList.remove("hidden");
+
+                let solution = await solutionPromise;
+
+                // Do your stuff.
+            });
+        </script>
+    </body>
+</html>
 ```
 
-### Using On Self-Hosted Ducklings
+<Callout>
+    Solution tokens expire after the time set in the dashboard. In case of failure to validate, try
+    refreshing the challenge (calling `duckity.solve()` again).
+</Callout>
 
-Self-hosted ducklings are hosted at a different domain from Duckity-hosted ducklings. To point it
-to a custom domain, change the following setting:
+## Contributing & License
 
-```ts
-const PROTECTION_PROFILE_ID: string = "py83YHkXV6ZpIsJZGVxzS";
-// ---cut---
-import duckity from "@duckity/js";
+All contributions are welcome to the SDK. Whether it's bug fixes, suggestions, new features,
+documentation updates, or fixing a typo, if you think you can make this SDK better, feel free to
+make a pull request in the [GitHub repository](https://github.com/duckity-com/sdks).
 
-let solution = await duckity.solve(
-  PROTECTION_PROFILE_ID,
-  { 
-    api: "https://quack.duckity.com",
-  }
-);
-```
-
-The default value for the `api` parameter is `"https://quack.duckity.com"`, which points to
-Duckity's hosted duckling. Change the domain name to your duckling's and you'll be ready to go.
+This SDK is licensed under the permissive MIT License, and so will be all contributions to the SDK.

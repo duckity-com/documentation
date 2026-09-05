@@ -9,10 +9,7 @@
         "---[CodeXml]Integrate---",
         "sdks/javascript",
         "sdks/react",
-        "sdks/c",
         "sdks/python",
-        "sdks/rust-std",
-        "sdks/rust-no-std",
-        "sdks/go"
+        "sdks/rust"        
     ]
 }
