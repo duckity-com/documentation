@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Learn how to use Duckity in some minutes.
+description: Integrate Duckity in less than 5 minutes.
 icon: Zap
 ---
 
@@ -44,36 +44,575 @@ to integrate it into your application.
     Don't worry about all the settings displayed for now, you'll learn to tune them later.
 </Callout>
 
-## Install an SDK [step]
+## Install a Client SDK [step]
 
-To integrate your protection profile with your application, you'll need a client-side SDK and a
-server-side SDK.
+To integrate your protection profile into your application, you'll need to install a client SDK in
+your client and validate solution tokens from your server. This is very simple to do and will take
+you little to no time.
 
-Duckity has multiple official SDKs for you to plug and play.
+<Tabs items={["JavaScript", "React", "Python", "Rust", "Other"]} groupId="sdk-language">
+    <Tab value="JavaScript">
+        <Tabs items={["Via NPM", "Via CDN"]}>
+            <Tab>
+                Run the following line in your terminal to install the Duckity SDK.
 
-import { SiC, SiJavascript, SiPython, SiRust, SiReact } from "@icons-pack/react-simple-icons";
+                ```package-install
+                @duckity/js
+                ```
 
-<Cards>
-    <Card href="/sdks/javascript" title="JavaScript" icon={<SiJavascript />}>
-        Integrate Duckity into your application using the JavaScript SDK.
-    </Card>
-    <Card href="/sdks/react" title="React" icon={<SiReact />}>
-        Integrate Duckity into your React app using the React SDK.
-    </Card>
-    <Card href="/sdks/python" title="Python 3" icon={<SiPython />}>
-        Integrate Duckity into your application using the Python SDK.
-    </Card>
-    <Card href="/sdks/rust" title="Rust" icon={<SiRust />}>
-        Integrate Duckity into your application using the Rust SDK. Supports no-std environments.
-    </Card>
-</Cards>
+                Then import it in your code:
 
-In case we don't have a client SDK for your language yet, you can use the C SDK. It's written in
-Rust, you can link to it through the exposed C API, and it wraps all the required encoding and
-decoding in a simple API. You may also find the following guide useful:
+                ```ts
+                import * as duckity from "@duckity/js";
+                ```
+            </Tab>
+            <Tab>
+                If you're using the SDK from a static site, import it using a CDN like
+                [esm.sh](https://esm.sh/) instead.
 
-import { FileCodeCorner } from "lucide-react";
+                ```html
+                <script type="module">
+                    // Using esm.sh
+                    import * as duckity from "https://esm.sh/@duckity/js";
 
-<Card title="Write Your Own SDK" icon={<FileCodeCorner />} href="/guides/write-your-own-sdk">
-    Learn how to write your own SDK in any language.
+                    // Using jsdelivr.net
+                    import * as duckity from "https://cdn.jsdelivr.net/npm/@duckity/js";
+
+                    // Using UNPKG
+                    import * as duckity from "https://unpkg.com/@duckity/js";
+                </script>
+                ```
+            </Tab>
+
+        </Tabs>
+
+        Once you've imported the SDK, solve a challenge like follows:
+
+        ```ts
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const solution: string = await duckity.solve(PROTECTION_PROFILE_ID);
+            // Send it to your backend.
+        }
+        ```
+
+        Send that solution token to your backend server. It's usually a good idea to send it in a
+        `X-Duckity-Solution` header in your request, for example
+
+        ```ts
+        await fetch("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Duckity-Solution": solution
+            },
+            body: JSON.stringify({
+                login: username,
+                password: password,
+            }),
+        });
+        ```
+
+        You can read about advanced usage in the SDK's documentation page:
+
+        <Card href="/sdks/javascript" title="JavaScript" icon={<SiJavascript />}>
+            Integrate Duckity into your application using the JavaScript SDK.
+        </Card>
+    </Tab>
+    <Tab value="React">
+        Run the following line in your terminal to install the Duckity SDK.
+
+        ```package-install
+        @duckity/react
+        ```
+
+        Then import the React hook in your code:
+
+        ```ts
+        import { useChallenge } from "@duckity/react";
+        ```
+
+        You can then use the hook in your client components:
+
+        <Tabs items={["Next.js", "Vite", "Remix", "Gatsby", "Expo Web", "Astro"]} groupId="react-framework" persist>
+            <Tab value="Next.js" id="nextjs">
+                ```ts
+                "use client";
+
+                import { useChallenge } from "@duckity/react";
+
+                function MyComponent() {
+                    const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+            </Tab>
+            <Tab value="Vite" id="vite">
+                ```ts
+                import { useChallenge } from "@duckity/react";
+
+                function MyComponent() {
+                    const duckity = useChallenge(import.meta.env.VITE_DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+            </Tab>
+            <Tab value="Remix" id="remix">
+                ```ts
+                import { json } from "@remix-run/node"; // Or cloudflare/deno
+                import { useLoaderData } from "@remix-run/react";
+                import { useChallenge } from "@duckity/react";
+
+                export async function loader() {
+                    return json({
+                        ENV: {
+                            DUCKITY_PROTECTION_PROFILE_ID: process.env.DUCKITY_PROTECTION_PROFILE_ID,
+                        },
+                    });
+                }
+
+                function MyComponent() {
+                    const data = useLoaderData<typeof loader>();
+                    const duckity = useChallenge(data.ENV.DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+            </Tab>
+            <Tab value="Gatsby" id="gatsby">
+                ```ts
+                import { useChallenge } from "@duckity/react";
+
+                function MyComponent() {
+                    const duckity = useChallenge(process.env.GATSBY_DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+            </Tab>
+            <Tab value="Expo Web" id="expo-web">
+                ```ts
+                import { useChallenge } from "@duckity/react";
+
+                function MyComponent() {
+                    const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+            </Tab>
+            <Tab value="Astro" id="astro">
+                ```ts
+                import { useChallenge } from "@duckity/react";
+
+                function MyComponent() {
+                    const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                }
+                ```
+
+                This is a client component, so use it as follows when rendering it:
+
+                ```tsx
+                <MyComponent client:load />
+                ```
+            </Tab>
+
+        </Tabs>
+
+        When the component is first rendered, it'll start fetching and solving a challenge.
+
+        You can then wait for and use a solution token:
+
+        ```ts
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const solution = await duckity.wait();
+            // Send the solution token to your backend.
+        }
+        ```
+
+        Send that solution token to your backend server. It's usually a good idea to send it in a
+        `X-Duckity-Solution` header in your request, for example
+
+        ```ts
+        await fetch("/api/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Duckity-Solution": solution
+            },
+            body: JSON.stringify({
+                login: username,
+                password: password,
+            }),
+        });
+        ```
+
+        You can read about advanced usage in the SDK's documentation page:
+
+        <Card href="/sdks/react" title="React" icon={<SiReact />}>
+            Integrate Duckity into your application using the React SDK.
+        </Card>
+    </Tab>
+    <Tab value="Python">
+        Install the SDK from PyPI using your favorite package manager:
+
+        {/* prettier-ignore */}
+        <Tabs items={["pip", "uv", "poetry"]} groupId="python-package-manager" persist>
+            <Tab value="pip" id="pip">
+                ```sh
+                pip install duckity
+                ```
+            </Tab>
+            <Tab value="uv" id="uv">
+                ```sh
+                uv add duckity
+                ```
+            </Tab>
+            <Tab value="poetry" id="poetry">
+                ```sh
+                poetry add duckity
+                ```
+            </Tab>
+        </Tabs>
+
+        Solving a challenge only requires your protection profile ID.
+
+        <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
+            <Tab value="Async" id="async">
+                ```py
+                import duckity
+
+                solution: str = await duckity.solve(PROTECTION_PROFILE_ID)
+                ```
+
+                The CPU-intensive part of solving the challenge is done in a
+                `ProcessPoolExecutor()`. Neither the GIL nor the async event loop will be blocked.
+            </Tab>
+            <Tab value="Sync" id="sync">
+                ```py
+                import asyncio
+
+                import duckity
+
+                solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+                ```
+
+                The CPU-intensive part of solving the challenge is done in a
+                `ProcessPoolExecutor()`. The GIL will not be blocked.
+            </Tab>
+        </Tabs>
+
+        Once you have a solution token, send it to your backend for validation. It's usually a good
+        idea to send it in a `X-Duckity-Solution` request header, like follows:
+
+        ```py
+        import requests
+
+        solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+
+        requests.post(
+            "https://api.example.com/login",
+            headers={
+                "Accept": "application/json",
+                "X-Duckity-Solution": solution,
+            },
+            json={
+                "login": username,
+                "password": password
+            }
+        )
+        ```
+
+        You can read about advanced usage in the SDK's documentation page:
+
+        <Card href="/sdks/python" title="Python" icon={<SiPython />}>
+            Integrate Duckity into your application using the Python SDK.
+        </Card>
+    </Tab>
+    <Tab value="Rust">
+        Run the following cargo command in your terminal to add the `duckity` crate to your
+        project:
+
+        ```sh
+        cargo add duckity
+        ```
+
+        The crate depends on `tokio`, you can use `async-compat` to make it work in `smol`
+        contexts.
+
+        To get and solve a challenge, use `duckity::solve()` like follows:
+
+        ```rs
+        let solution: str = duckity::solve(PROTECTION_PROFILE_ID).await?;
+        ```
+
+        That's it! Once you have your solution token, you can send it over to your backend for
+        validation. It's usually a good idea to send it in a `X-Duckity-Solution` request header,
+        like follows:
+
+        ```rs
+        reqwest::Client::new()
+            .post("https://api.example.com/login")
+            .header("x-duckity-solution", solution)
+            .json(&Login {
+                login: username,
+                password: password,
+            })
+            .send()
+            .await?;
+        ```
+
+        You can read about advanced usage in the SDK's documentation page:
+
+        <Card href="/sdks/rust" title="Rust" icon={<SiRust />}>
+            Integrate Duckity into your application using the Rust SDK.
+        </Card>
+    </Tab>
+    <Tab value="Other">
+        In case your platform is a different one, we provide a detailed step-by-step guide on how
+        to write your own client-side SDK implementation in any language, with code examples and
+        pseudocode. It's written so that anyone can implement a working client-side implementation
+        for any platform, so if you have a bit of time, you may be able to get it working in less
+        than an hour.
+
+        <Card href="/guides/write-your-own-sdk" title="Write Your Own SDK" icon={<LiPencil />}>
+            Integrate Duckity into your application in any programming language and platform.
+        </Card>
+
+        We constantly improve this guide with incoming feedback from developers like you. If you
+        find anything that could be improved, let us know!
+
+        Additionally, in case anything in the guide is not clear, open a support ticket in the
+        dashboard and we'll try to help you out. Note that we're not experts in every language nor
+        platform, so we likely won't be able to debug your code, rather help you understand what
+        the guide says.
+    </Tab>
+
+</Tabs>
+
+## Install a Server SDK [step]
+
+Once you have a solution token in your server, validating it is quite easy.
+
+<Tabs items={["JavaScript", "Python", "Rust", "Manual HTTP"]} groupId="sdk-language">
+    <Tab value="JavaScript">
+        Run the following line in your terminal to install the Duckity SDK.
+
+        ```package-install
+        @duckity/js
+        ```
+
+        Then import it in your code:
+
+        ```ts
+        import * as duckity from "@duckity/js";
+        ```
+
+        To validate the solution token, use `duckity.validate()`.
+
+        ```ts
+        let isValid = await duckity.validate(
+            solution,             // The solution token submitted by the client.
+            clientIp,             // The IP address of the client that submitted the solution.
+            applicationSecret,    // Your application's secret. Get it from the dashboard.
+            protectionProfileId,  // The protection profile ID used to generate the challenge.
+        );
+        ```
+
+        That's it! If the solution is not valid, reject the request with an error. Otherwise,
+        proceed to process the rest of the request.
+    </Tab>
+    <Tab value="Python">
+        Install the SDK from PyPI using your favorite package manager:
+
+        {/* prettier-ignore */}
+        <Tabs items={["pip", "uv", "poetry"]} groupId="python-package-manager" persist>
+            <Tab value="pip" id="pip">
+                ```sh
+                pip install duckity
+                ```
+            </Tab>
+            <Tab value="uv" id="uv">
+                ```sh
+                uv add duckity
+                ```
+            </Tab>
+            <Tab value="poetry" id="poetry">
+                ```sh
+                poetry add duckity
+                ```
+            </Tab>
+        </Tabs>
+
+        Once you have done it, validate the solution token as follows:
+
+        <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
+            <Tab value="Async" id="async">
+                ```py
+                import duckity
+
+                solution: str               # The solution token submitted by the client.
+                client_ip: str              # The IP address of the client that submitted the solution.
+                application_secret: str     # Your application's secret. Get it from the dashboard.
+                protection_profile_id: str  # The protection profile ID used to generate the challenge.
+
+                is_valid: bool = await duckity.validate(
+                    solution, client_ip, application_secret, protection_profile_id
+                )
+                ```
+            </Tab>
+            <Tab value="Sync" id="sync">
+                ```py
+                import asyncio
+
+                import duckity
+
+                solution: str               # The solution token submitted by the client.
+                client_ip: str              # The IP address of the client that submitted the solution.
+                application_secret: str     # Your application's secret. Get it from the dashboard.
+                protection_profile_id: str  # The protection profile ID used to generate the challenge.
+
+                is_valid: bool = asyncio.run(
+                    duckity.validate(solution, client_ip, application_secret, protection_profile_id)
+                )
+                ```
+            </Tab>
+
+        </Tabs>
+
+        That's it! If the solution token is valid, you can proceed to process your request. If it's
+        not, return an error to the client and do not further process the request.
+    </Tab>
+    <Tab value="Rust">
+        Run the following cargo command in your terminal to add the `duckity` crate to your
+        project:
+
+        ```sh
+        cargo add duckity
+        ```
+
+        Once you have it installed, you can validate solution tokens as follows:
+
+        ```rs
+        let is_valid: bool = duckity::validate(
+            solution,              // The solution token submitted by the client.
+            client_ip,             // The IP address of the client that submitted the solution.
+            APPLICATION_SECRET,    // Your application's secret. Get it from the dashboard.
+            PROTECTION_PROFILE_ID  // The protection profile ID used to generate the challenge.
+        )
+        .await?;
+        ```
+
+        That's it! If the solution token is valid, you can proceed to process your request. If it's
+        not, return an error to the client and do not further process the request.
+    </Tab>
+    <Tab value="Manual HTTP">
+        In case you cannot or do not want to install an SDK, you can validate solution tokens by
+        hand by making the HTTP request by hand instead.
+
+        ```http
+        POST /d1/challenges/{protection_profile_id}/validate HTTP/1.1
+        Host: api.duckity.com
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer {application_secret}
+
+        {
+            "solution": "<solution-token-submitted-by-the-client>",
+            "ip": "<ip-address-of-the-client-that-submitted-the-solution>"
+        }
+        ```
+
+        Validation responses are simple:
+
+        <Tabs items={["200", "401", "404", "422", "429", "500"]}>
+            <Tab value="200">
+                ```http
+                HTTP/1.1 200 OK
+                Content-Type: application/json
+
+                {
+                    "is_valid": true  // or false
+                }
+                ```
+            </Tab>
+            <Tab value="401">
+                ```http
+                HTTP/1.1 401 Unauthorized
+                Content-Type: application/json
+
+                {
+                    "title": "Invalid Application Secret",
+                    "message": "The application secret you provided was not valid."
+                }
+                ```
+            </Tab>
+            <Tab value="404">
+                ```http
+                HTTP/1.1 404 Not Found
+                Content-Type: application/json
+
+                {
+                    "title": "Protection Profile Not Found",
+                    "message": "The protection profile ID you specified was not found."
+                }
+                ```
+            </Tab>
+            <Tab value="422">
+                ```http
+                HTTP/1.1 422 Unprocessable Entity
+                Content-Type: application/json
+
+                {
+                    "title": "Invalid Request Body",
+                    "message": "Are you sure the JSON body you sent in the request was valid?"
+                }
+                ```
+            </Tab>
+            <Tab value="429">
+                ```http
+                HTTP/1.1 429 Too Many Requests
+                Content-Type: application/json
+
+                {
+                    "title": "Too Many Requests",
+                    "message": "Wohoah, you're going too fast, buddy. Slow down a bit."
+                }
+                ```
+            </Tab>
+            <Tab value="500">
+                ```http
+                HTTP/1.1 500 Internal Server Error
+                Content-Type: application/json
+
+                {
+                    "title": "Internal Server Error",
+                    "message": "The server crashed. Please try again."
+                }
+                ```
+            </Tab>
+        </Tabs>
+
+        That's it! If the solution token is valid, you can proceed to process your request. If it's
+        not, return an error to the client and do not further process the request.
+
+        Note that status codes are related to server actions, not to client actions. An invalid
+        solution token submitted by the client will return `200` because the token was validated
+        successfully (even if the result was that it was invalid), while a wrong application secret
+        or an incorrect protection profile ID will return `4xx` status codes.
+    </Tab>
+
+</Tabs>
+
+## Next Steps
+
+Once you have successfully integrated duckity into your application, you're done with the code part.
+The behavior of challenges issued is fully customizable from the Duckity dashboard. Almost every
+configuration can be easily understood by their dashboard description. However, to learn how to
+combine settings to produce a more powerful setup, check out the following guide. It goes
+configuration by configuration to teach you how to configure the parameters you need to suit your
+application's needs.
+
+<Card
+    href="/guides/tune-a-protection-profile"
+    title="Tune a Protection Profile"
+    icon={<LiPencil />}
+>
+    Learn how to tune your protection profiles to better protect your application while enhancing
+    your users' experiences.
 </Card>

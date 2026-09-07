@@ -4,12 +4,8 @@
         "index",
         "quick-start",
         "---[BookOpenText]Guides---",
-        "guides/tune-a-protection-profile",
-        "guides/write-your-own-sdk",
+        "...guides",
         "---[CodeXml]Integrate---",
-        "sdks/javascript",
-        "sdks/react",
-        "sdks/python",
-        "sdks/rust"        
+        "...sdks"
     ]
 }

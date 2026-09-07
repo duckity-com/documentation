@@ -13,6 +13,16 @@ const config = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/:path*.md",
+          destination: "/llms.mdx/docs/:path*",
+        },
+      ],
+    };
+  },
 };
 
 export default withMDX(config);

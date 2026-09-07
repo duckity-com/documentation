@@ -4,15 +4,87 @@ description: Welcome to Duckity's documentation site!
 icon: Fish
 ---
 
-Welcome to Duckity's documentation site. Here you'll find everything you need to know about
-Duckity, plus some extras to help you use Duckity more efficiently and effectively.
+Welcome to Duckity's documentation site. Here you'll find everything you need to know about Duckity,
+plus some extras to help you use Duckity more efficiently and effectively.
 
-Duckity is an API-protection software. Unlike CAPTCHAs, which are black boxes and depend on AI
-(known to make mistakes), Duckity relies on well-studied algorithms and even some things commonly
-used to give you full control over access to your API.
+## What Duckity Is
 
-Duckity is NOT a replacement for basic security practices like rate limiting, and neither it is a
-DDoS protection service. Use Cloudflare, Bunny.net, or similar for protection of that kind.
+Duckity simplifies your API's protection, makes it predictable, and increases the cost an attacker
+has to pay to abuse your system.
 
-If you're new to Duckity, head over to the [Quick Start](/quick-start). It'll guide you on how to get started and
-give you some templates to reduce the boilerplate configuration tasks.
+<Cards>
+    <Card title="Impose a Cost on Abuse" icon={<LiHandCoins />}>
+        Duckity adds an invisible-to-the-user non-parallelizable CPU cost on every protected request
+        that increases the cost of abuse.
+    </Card>
+    <Card title="Keep Control" icon={<LiFerrisWheel />}>
+        Keep full control over your protection's behavior by tuning parameters from the dashboard.
+        Nothing is implicit.
+    </Card>
+    <Card title="Know What Goes On" icon={<LiSearchCheck />}>
+        Monitor the system's state at any time. Access patterns are logged for as long as you
+        configure them to audit behavior in real time.
+    </Card>
+    <Card title="Set Up Once, Use Everywhere" icon={<LiMonitorSmartphone />}>
+        Duckity provides cross-platform SDKs for you to use the same protection system everywhere.
+        Get started in less than 5 minutes.
+    </Card>
+</Cards>
+
+By layering dynamic CPU cost on top of configurable access rules and real-time adaptive costs, users
+stop being annoyed by intrusive CAPTCHA puzzles while abusers get an increasing cost.
+
+Optimized for scale and heavy concurrent access, Duckity automatically scales with your system
+without hassle.
+
+## Benefits Over CAPTCHAs and Alternatives
+
+Duckity provides several improvements over standard CAPTCHAs and CAPTCHA alternatives:
+
+<Accordions>
+    <Accordion title="Predictable, Invisible Behavior">
+        By relying on modern verifiable delay functions, Duckity is able to provide hands-off
+        security to your system and customers without sacrificing on user experience. Abuse cost
+        scales dynamically while your users get a predictable application experience, unlike
+        alternatives where delays vary substantially depending on randomness.
+    </Accordion>
+    <Accordion title="Set Up Once, Use Everywhere">
+        Duckity provides multiple easy-to-use cross-platform SDKs for you to use a single
+        configuration across all your clients. From web to native desktop and mobile applications,
+        CLI applications, M2M connections, videogames, IoT, and more.
+    </Accordion>
+    <Accordion title="Made to Suit your Application">
+        Configure Duckity's behavior to suit your application's precise needs. Multiple features can
+        get individual configurations to beter suit each of their access patterns and requirements.
+    </Accordion>
+    <Accordion title="Simple to Integrate">
+        Most SDKs require no more than 4 lines of code to integrate with your application. Duckity
+        provides detailed documentation for every feature to help you make the most out of it.
+    </Accordion>
+</Accordions>
+
+Duckity does not try to tell humans and bots apart. Instead, it enforces a background computational
+cost that humans do not notice.
+
+|                             | Duckity | CAPTCHAs |
+| --------------------------- | ------- | -------- |
+| Simple                      | ✅      | ✅       |
+| Transparent                 | ✅      | ❌       |
+| Predictable behavior        | ✅      | ❌       |
+| Customizable behavior       | ✅      | ❌       |
+| Frictionless                | ✅      | ❌       |
+| Cross-platform              | ✅      | ❌       |
+| Accessible                  | ✅      | ❌       |
+| Tells humans and bots apart | ❌      | ❓       |
+| Cost-effective              | ✅      | ❓       |
+| AI-resistant                | ✅      | ❓       |
+
+## Get Started
+
+You can make a free account by heading over to the [Duckity Dashboard](//app.duckity.com/hello). To
+learn how to integrate with your stack in some minutes, head over to the Quick Start page.
+
+<Card href="/quick-start" title="Quick Start" icon={<LiPencil />}>
+    Integrate Duckity in less than 5 minutes.
+</Card>
+
