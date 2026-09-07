@@ -136,7 +136,7 @@ you little to no time.
         You can then use the hook in your client components:
 
         <Tabs items={["Next.js", "Vite", "Remix", "Gatsby", "Expo Web", "Astro"]} groupId="react-framework" persist>
-            <Tab value="Next.js" id="nextjs">
+            <Tab value="Next.js">
                 ```ts
                 "use client";
 
@@ -147,7 +147,7 @@ you little to no time.
                 }
                 ```
             </Tab>
-            <Tab value="Vite" id="vite">
+            <Tab value="Vite">
                 ```ts
                 import { useChallenge } from "@duckity/react";
 
@@ -156,7 +156,7 @@ you little to no time.
                 }
                 ```
             </Tab>
-            <Tab value="Remix" id="remix">
+            <Tab value="Remix">
                 ```ts
                 import { json } from "@remix-run/node"; // Or cloudflare/deno
                 import { useLoaderData } from "@remix-run/react";
@@ -176,7 +176,7 @@ you little to no time.
                 }
                 ```
             </Tab>
-            <Tab value="Gatsby" id="gatsby">
+            <Tab value="Gatsby">
                 ```ts
                 import { useChallenge } from "@duckity/react";
 
@@ -185,7 +185,7 @@ you little to no time.
                 }
                 ```
             </Tab>
-            <Tab value="Expo Web" id="expo-web">
+            <Tab value="Expo Web">
                 ```ts
                 import { useChallenge } from "@duckity/react";
 
@@ -194,7 +194,7 @@ you little to no time.
                 }
                 ```
             </Tab>
-            <Tab value="Astro" id="astro">
+            <Tab value="Astro">
                 ```ts
                 import { useChallenge } from "@duckity/react";
 
@@ -253,17 +253,17 @@ you little to no time.
 
         {/* prettier-ignore */}
         <Tabs items={["pip", "uv", "poetry"]} groupId="python-package-manager" persist>
-            <Tab value="pip" id="pip">
+            <Tab value="pip">
                 ```sh
                 pip install duckity
                 ```
             </Tab>
-            <Tab value="uv" id="uv">
+            <Tab value="uv">
                 ```sh
                 uv add duckity
                 ```
             </Tab>
-            <Tab value="poetry" id="poetry">
+            <Tab value="poetry">
                 ```sh
                 poetry add duckity
                 ```
@@ -273,7 +273,7 @@ you little to no time.
         Solving a challenge only requires your protection profile ID.
 
         <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
-            <Tab value="Async" id="async">
+            <Tab value="Async">
                 ```py
                 import duckity
 
@@ -283,7 +283,7 @@ you little to no time.
                 The CPU-intensive part of solving the challenge is done in a
                 `ProcessPoolExecutor()`. Neither the GIL nor the async event loop will be blocked.
             </Tab>
-            <Tab value="Sync" id="sync">
+            <Tab value="Sync">
                 ```py
                 import asyncio
 
@@ -422,17 +422,17 @@ Once you have a solution token in your server, validating it is quite easy.
 
         {/* prettier-ignore */}
         <Tabs items={["pip", "uv", "poetry"]} groupId="python-package-manager" persist>
-            <Tab value="pip" id="pip">
+            <Tab value="pip">
                 ```sh
                 pip install duckity
                 ```
             </Tab>
-            <Tab value="uv" id="uv">
+            <Tab value="uv">
                 ```sh
                 uv add duckity
                 ```
             </Tab>
-            <Tab value="poetry" id="poetry">
+            <Tab value="poetry">
                 ```sh
                 poetry add duckity
                 ```
@@ -442,7 +442,7 @@ Once you have a solution token in your server, validating it is quite easy.
         Once you have done it, validate the solution token as follows:
 
         <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
-            <Tab value="Async" id="async">
+            <Tab value="Async">
                 ```py
                 import duckity
 
@@ -456,7 +456,7 @@ Once you have a solution token in your server, validating it is quite easy.
                 )
                 ```
             </Tab>
-            <Tab value="Sync" id="sync">
+            <Tab value="Sync">
                 ```py
                 import asyncio
 
