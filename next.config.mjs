@@ -5,11 +5,11 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
   serverExternalPackages: ["@takumi-rs/core", "typescript", "twoslash"],
-  // output: "export",
+  output: "export",
   reactStrictMode: true,
   allowedDevOrigins: ["duckity.com", "duckity.dev"],
   basePath: "/docs",
-  // trailingSlash: true,
+  trailingSlash: true,
   images: {
     unoptimized: true,
   },
