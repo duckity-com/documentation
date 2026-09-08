@@ -63,5 +63,6 @@ export async function generateMetadata(
     openGraph: {
       images: getPageImageUrl(page).url,
     },
+    metadataBase: new URL("https://duckity.com")
   };
 }
