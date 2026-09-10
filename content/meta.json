@@ -6,6 +6,9 @@
         "---[BookOpenText]Guides---",
         "...guides",
         "---[CodeXml]Integrate---",
-        "...sdks"
+        "...sdks",
+        "---[Gavel]Legal---",
+        "legal/terms-of-service",
+        "legal/privacy-policy"
     ]
 }
