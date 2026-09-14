@@ -44,11 +44,7 @@ to get challenges look like follows:
 POST /d1/challenges/{protection_profile_id}/issue HTTP/1.1
 Host: api.duckity.com
 Accept: application/json
-X-Duckity-CSRF: 1
 ```
-
-The `X-Duckity-CSRF` header is required to enforce CORS preflight in web browsers and prevent CSRF.
-Requests will be rejected with a `400 Bad Request` error if it's not set. Any value is valid for it.
 
 The response will look like this:
 
@@ -57,7 +53,6 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 Access-Control-Allow-Origin: https://example.com
 Access-Control-Allow-Methods: POST
-Access-Control-Allow-Headers: X-Duckity-CSRF
 X-RateLimit-Next-In: 1000
 X-RateLimit-Resets-In: 1000
 X-RateLimit-Remaining: 0
