@@ -21,8 +21,8 @@ Before you can integrate Duckity into your application, you'll need to have the 
 
 1. An application,
 2. CORS origins set up pointing to your application's origin(s),
-3. At least one protection profile created in that application, and
-4. The ID of the protection profiles to use
+3. At least one policy created in that application, and
+4. The ID of the policies to use
 
 If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
 read the [Quick Start](/quick-start) guide to learn how to set those up.
@@ -55,7 +55,7 @@ Use the hook as follows:
         import { useChallenge } from "@duckity/react";
 
         function MyComponent() {
-            const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_POLICY_ID);
         }
         ```
     </Tab>
@@ -64,7 +64,7 @@ Use the hook as follows:
         import { useChallenge } from "@duckity/react";
 
         function MyComponent() {
-            const duckity = useChallenge(import.meta.env.VITE_DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(import.meta.env.VITE_DUCKITY_POLICY_ID);
         }
         ```
     </Tab>
@@ -77,14 +77,14 @@ Use the hook as follows:
         export async function loader() {
             return json({
                 ENV: {
-                    DUCKITY_PROTECTION_PROFILE_ID: process.env.DUCKITY_PROTECTION_PROFILE_ID,
+                    DUCKITY_POLICY_ID: process.env.DUCKITY_POLICY_ID,
                 },
             });
         }
 
         function MyComponent() {
             const data = useLoaderData<typeof loader>();
-            const duckity = useChallenge(data.ENV.DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(data.ENV.DUCKITY_POLICY_ID);
         }
         ```
     </Tab>
@@ -93,7 +93,7 @@ Use the hook as follows:
         import { useChallenge } from "@duckity/react";
 
         function MyComponent() {
-            const duckity = useChallenge(process.env.GATSBY_DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(process.env.GATSBY_DUCKITY_POLICY_ID);
         }
         ```
     </Tab>
@@ -102,7 +102,7 @@ Use the hook as follows:
         import { useChallenge } from "@duckity/react";
 
         function MyComponent() {
-            const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_POLICY_ID);
         }
         ```
     </Tab>
@@ -111,7 +111,7 @@ Use the hook as follows:
         import { useChallenge } from "@duckity/react";
 
         function MyComponent() {
-            const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+            const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_POLICY_ID);
         }
         ```
 

@@ -23,8 +23,8 @@ Before you can integrate Duckity into your application, you'll need to have the 
 
 1. An application,
 2. CORS origins set up pointing to your application's origin(s),
-3. At least one protection profile created in that application, and
-4. The ID of the protection profiles to use
+3. At least one policy created in that application, and
+4. The ID of the policies to use
 
 If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
 read the [Quick Start](/quick-start) guide to learn how to set those up.
@@ -78,7 +78,7 @@ Once you have the SDK installed, you can request a challenge whenever you need i
 import duckity from "@duckity/js";
 
 /// Slow! Runs in a web worker, yet don't let it block code below unless necessary.
-let solution: string = await duckity.solve(PROTECTION_PROFILE_ID);
+let solution: string = await duckity.solve(POLICY_ID);
 ```
 
 ### Validate a Challenge [step]
@@ -86,18 +86,18 @@ let solution: string = await duckity.solve(PROTECTION_PROFILE_ID);
 Send the solution token to your backend server any way you want. A header or parameter in a JSON
 field will work.
 
-Once in the server, you'll need the client's IP, their submitted solution token, the protection
-profile's ID, and the application secret.
+Once in the server, you'll need the client's IP, their submitted solution token, the policy's ID,
+and the application secret.
 
 ```ts
 import * as duckity from "@duckity/js";
 
 let applicationSecret: string;
-let protectionProfileId: string;
+let policyId: string;
 let clientIp: string;
 let solution: string;
 
-let isValid = await duckity.validate(solution, clientIp, applicationSecret, protectionProfileId);
+let isValid = await duckity.validate(solution, clientIp, applicationSecret, policyId);
 
 if (isValid) {
     // Keep processing the request.
@@ -144,7 +144,7 @@ wait.
         <script type="module">
             import * as duckity from "https://esm.sh/@duckity/js";
 
-            const PROTECTION_PROFILE_ID = "<your-protection-profile-id>";
+            const POLICY_ID = "<your-policy-id>";
 
             const form = document.getElementById("form");
             const submitButton = document.getElementById("submit-button");
@@ -153,7 +153,7 @@ wait.
             // A Promise<string>, it will solve a challenge in the background while the user logs
             // in. Do not `await` it here, it will prevent the `form.addEventListener()` call from
             // running until the challenge is solved, which takes some time.
-            let solutionPromise = duckity.solve(PROTECTION_PROFILE_ID);
+            let solutionPromise = duckity.solve(POLICY_ID);
 
             form.addEventListener("submit", async (e) => {
                 e.preventDefault();

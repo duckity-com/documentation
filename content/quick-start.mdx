@@ -24,21 +24,21 @@ now have your first application created.
     origins. If your application is not a web app, you can leave the CORS origins empty.
 </Callout>
 
-## Create a Protection Profile [step]
+## Create a Policy [step]
 
 Applications commonly have multiple features that need to be protected. For example, you may have a
-signup form and a login form with different protection needs. For each, you'll create one
-**protection profile** with settings tuned to each feature's specific needs.
+signup form and a login form with different protection needs. For each, you'll create one **policy**
+with settings tuned to each feature's specific needs.
 
-Each application needs at least one protection profile to work. To create your first one, press the
-**+ Create Protection Profile** button.
+Each application needs at least one policy to work. To create your first one, press the **+ Create
+Policy** button.
 
 Set the name to the name of the feature you'll be protecting, like "Sign-up Form" or "Add Friend".
 This is for you to recognize it later, it won't be displayed to your users. Once you're done filling
-it, press on **✓ Create Protection Profile**.
+it, press on **✓ Create Policy**.
 
-Copy your protection profile's ID using the button at the top right corner, that's all you'll need
-to integrate it into your application.
+Copy your policy's ID using the button at the top right corner, that's all you'll need to integrate
+it into your application.
 
 <Callout>
     Don't worry about all the settings displayed for now, you'll learn to tune them later.
@@ -46,9 +46,9 @@ to integrate it into your application.
 
 ## Install a Client SDK [step]
 
-To integrate your protection profile into your application, you'll need to install a client SDK in
-your client and validate solution tokens from your server. This is very simple to do and will take
-you little to no time.
+To integrate your policy into your application, you'll need to install a client SDK in your client
+and validate solution tokens from your server. This is very simple to do and will take you little to
+no time.
 
 <Tabs items={["JavaScript", "React", "Python", "Rust", "Other"]} groupId="sdk-language">
     <Tab value="JavaScript">
@@ -91,7 +91,7 @@ you little to no time.
         ```ts
         async function handleSubmit(e) {
             e.preventDefault();
-            const solution: string = await duckity.solve(PROTECTION_PROFILE_ID);
+            const solution: string = await duckity.solve(POLICY_ID);
             // Send it to your backend.
         }
         ```
@@ -143,7 +143,7 @@ you little to no time.
                 import { useChallenge } from "@duckity/react";
 
                 function MyComponent() {
-                    const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(process.env.NEXT_PUBLIC_DUCKITY_POLICY_ID);
                 }
                 ```
             </Tab>
@@ -152,7 +152,7 @@ you little to no time.
                 import { useChallenge } from "@duckity/react";
 
                 function MyComponent() {
-                    const duckity = useChallenge(import.meta.env.VITE_DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(import.meta.env.VITE_DUCKITY_POLICY_ID);
                 }
                 ```
             </Tab>
@@ -165,14 +165,14 @@ you little to no time.
                 export async function loader() {
                     return json({
                         ENV: {
-                            DUCKITY_PROTECTION_PROFILE_ID: process.env.DUCKITY_PROTECTION_PROFILE_ID,
+                            DUCKITY_POLICY_ID: process.env.DUCKITY_POLICY_ID,
                         },
                     });
                 }
 
                 function MyComponent() {
                     const data = useLoaderData<typeof loader>();
-                    const duckity = useChallenge(data.ENV.DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(data.ENV.DUCKITY_POLICY_ID);
                 }
                 ```
             </Tab>
@@ -181,7 +181,7 @@ you little to no time.
                 import { useChallenge } from "@duckity/react";
 
                 function MyComponent() {
-                    const duckity = useChallenge(process.env.GATSBY_DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(process.env.GATSBY_DUCKITY_POLICY_ID);
                 }
                 ```
             </Tab>
@@ -190,7 +190,7 @@ you little to no time.
                 import { useChallenge } from "@duckity/react";
 
                 function MyComponent() {
-                    const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(process.env.EXPO_PUBLIC_DUCKITY_POLICY_ID);
                 }
                 ```
             </Tab>
@@ -199,7 +199,7 @@ you little to no time.
                 import { useChallenge } from "@duckity/react";
 
                 function MyComponent() {
-                    const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_PROTECTION_PROFILE_ID);
+                    const duckity = useChallenge(import.meta.env.PUBLIC_DUCKITY_POLICY_ID);
                 }
                 ```
 
@@ -270,14 +270,14 @@ you little to no time.
             </Tab>
         </Tabs>
 
-        Solving a challenge only requires your protection profile ID.
+        Solving a challenge only requires your policy ID.
 
         <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
             <Tab value="Async">
                 ```py
                 import duckity
 
-                solution: str = await duckity.solve(PROTECTION_PROFILE_ID)
+                solution: str = await duckity.solve(POLICY_ID)
                 ```
 
                 The CPU-intensive part of solving the challenge is done in a
@@ -289,7 +289,7 @@ you little to no time.
 
                 import duckity
 
-                solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+                solution: str = asyncio.run(duckity.solve(POLICY_ID))
                 ```
 
                 The CPU-intensive part of solving the challenge is done in a
@@ -303,7 +303,7 @@ you little to no time.
         ```py
         import requests
 
-        solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+        solution: str = asyncio.run(duckity.solve(POLICY_ID))
 
         requests.post(
             "https://api.example.com/login",
@@ -338,7 +338,7 @@ you little to no time.
         To get and solve a challenge, use `duckity::solve()` like follows:
 
         ```rs
-        let solution: str = duckity::solve(PROTECTION_PROFILE_ID).await?;
+        let solution: str = duckity::solve(POLICY_ID).await?;
         ```
 
         That's it! Once you have your solution token, you can send it over to your backend for
@@ -410,7 +410,7 @@ Once you have a solution token in your server, validating it is quite easy.
             solution,             // The solution token submitted by the client.
             clientIp,             // The IP address of the client that submitted the solution.
             applicationSecret,    // Your application's secret. Get it from the dashboard.
-            protectionProfileId,  // The protection profile ID used to generate the challenge.
+            policyId,  // The policy ID used to generate the challenge.
         );
         ```
 
@@ -449,10 +449,10 @@ Once you have a solution token in your server, validating it is quite easy.
                 solution: str               # The solution token submitted by the client.
                 client_ip: str              # The IP address of the client that submitted the solution.
                 application_secret: str     # Your application's secret. Get it from the dashboard.
-                protection_profile_id: str  # The protection profile ID used to generate the challenge.
+                policy_id: str  # The policy ID used to generate the challenge.
 
                 is_valid: bool = await duckity.validate(
-                    solution, client_ip, application_secret, protection_profile_id
+                    solution, client_ip, application_secret, policy_id
                 )
                 ```
             </Tab>
@@ -465,10 +465,10 @@ Once you have a solution token in your server, validating it is quite easy.
                 solution: str               # The solution token submitted by the client.
                 client_ip: str              # The IP address of the client that submitted the solution.
                 application_secret: str     # Your application's secret. Get it from the dashboard.
-                protection_profile_id: str  # The protection profile ID used to generate the challenge.
+                policy_id: str  # The policy ID used to generate the challenge.
 
                 is_valid: bool = asyncio.run(
-                    duckity.validate(solution, client_ip, application_secret, protection_profile_id)
+                    duckity.validate(solution, client_ip, application_secret, policy_id)
                 )
                 ```
             </Tab>
@@ -493,7 +493,7 @@ Once you have a solution token in your server, validating it is quite easy.
             solution,              // The solution token submitted by the client.
             client_ip,             // The IP address of the client that submitted the solution.
             APPLICATION_SECRET,    // Your application's secret. Get it from the dashboard.
-            PROTECTION_PROFILE_ID  // The protection profile ID used to generate the challenge.
+            POLICY_ID  // The policy ID used to generate the challenge.
         )
         .await?;
         ```
@@ -506,7 +506,7 @@ Once you have a solution token in your server, validating it is quite easy.
         hand by making the HTTP request by hand instead.
 
         ```http
-        POST /d1/challenges/{protection_profile_id}/validate HTTP/1.1
+        POST /d1/challenges/{policy_id}/validate HTTP/1.1
         Host: api.duckity.com
         Accept: application/json
         Content-Type: application/json
@@ -548,8 +548,8 @@ Once you have a solution token in your server, validating it is quite easy.
                 Content-Type: application/json
 
                 {
-                    "title": "Protection Profile Not Found",
-                    "message": "The protection profile ID you specified was not found."
+                    "title": "Policy Not Found",
+                    "message": "The policy ID you specified was not found."
                 }
                 ```
             </Tab>
@@ -594,7 +594,7 @@ Once you have a solution token in your server, validating it is quite easy.
         Note that status codes are related to server actions, not to client actions. An invalid
         solution token submitted by the client will return `200` because the token was validated
         successfully (even if the result was that it was invalid), while a wrong application secret
-        or an incorrect protection profile ID will return `4xx` status codes.
+        or an incorrect policy ID will return `4xx` status codes.
     </Tab>
 
 </Tabs>
@@ -608,11 +608,7 @@ combine settings to produce a more powerful setup, check out the following guide
 configuration by configuration to teach you how to configure the parameters you need to suit your
 application's needs.
 
-<Card
-    href="/guides/tune-a-protection-profile"
-    title="Tune a Protection Profile"
-    icon={<LiPencil />}
->
-    Learn how to tune your protection profiles to better protect your application while enhancing
-    your users' experiences.
+<Card href="/guides/tune-a-policy" title="Tune a Policy" icon={<LiPencil />}>
+    Learn how to tune your policies to better protect your application while enhancing your users'
+    experiences.
 </Card>

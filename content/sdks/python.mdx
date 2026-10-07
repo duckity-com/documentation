@@ -19,8 +19,8 @@ event loop's version of it.
 Before you can integrate Duckity into your application, you'll need to have the following:
 
 1. An application,
-2. At least one protection profile created in that application, and
-3. The ID of the protection profiles to use
+2. At least one policy created in that application, and
+3. The ID of the policies to use
 
 If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
 read the [Quick Start](/quick-start) guide to learn how to set those up.
@@ -52,14 +52,14 @@ Install the SDK from PyPI using your favorite package manager:
 
 ### Solve a Challenge [step]
 
-Solving a challenge only requires a protection profile ID.
+Solving a challenge only requires a policy ID.
 
 <Tabs items={["Async", "Sync"]} groupId="python-sync" persist>
     <Tab value="Async" id="async">
         ```py
         import duckity
 
-        solution: str = await duckity.solve(PROTECTION_PROFILE_ID)
+        solution: str = await duckity.solve(POLICY_ID)
         ```
 
         The CPU-intensive part of solving the challenge is done in a `ProcessPoolExecutor()`.
@@ -71,7 +71,7 @@ Solving a challenge only requires a protection profile ID.
 
         import duckity
 
-        solution: str = asyncio.run(duckity.solve(PROTECTION_PROFILE_ID))
+        solution: str = asyncio.run(duckity.solve(POLICY_ID))
         ```
 
         The CPU-intensive part of solving the challenge is done in a `ProcessPoolExecutor()`. The
@@ -90,7 +90,7 @@ To validate a solution token, you'll need 4 things:
 1. The solution token,
 2. The IP of the client that submitted the solution,
 3. The application's secret, and
-4. The protection profile's ID.
+4. The policy's ID.
 
 Once you have them, you can validate a solution token as follows:
 
@@ -102,10 +102,10 @@ Once you have them, you can validate a solution token as follows:
         solution: str
         client_ip: str
         application_secret: str
-        protection_profile_id: str
+        policy_id: str
 
         is_valid: bool = await duckity.validate(
-            solution, client_ip, application_secret, protection_profile_id
+            solution, client_ip, application_secret, policy_id
         )
         ```
     </Tab>
@@ -118,10 +118,10 @@ Once you have them, you can validate a solution token as follows:
         solution: str
         client_ip: str
         application_secret: str
-        protection_profile_id: str
+        policy_id: str
 
         is_valid: bool = asyncio.run(
-            duckity.validate(solution, client_ip, application_secret, protection_profile_id)
+            duckity.validate(solution, client_ip, application_secret, policy_id)
         )
         ```
     </Tab>
@@ -154,7 +154,7 @@ import duckity
 
 
 async def login():
-    solution_task = asyncio.create_task(duckity.solve(PROTECTION_PROFILE_ID))
+    solution_task = asyncio.create_task(duckity.solve(POLICY_ID))
 
     email = await asyncio.to_thread(input, "Enter your email: ")
     password = await asyncio.to_thread(getpass.getpass, "Enter your password (hidden): ")
@@ -191,7 +191,7 @@ from pydantic import BaseModel
 dotenv.load_dotenv(override=True)
 
 
-PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+POLICY_ID = os.environ["DUCKITY_POLICY_ID"]
 APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
 
 
@@ -208,7 +208,7 @@ async def protected(request: Request, payload: RequestBodySchema):
         payload.solution,
         request.client.host,  # Make sure to take into account X-Forwarded-For if behind a reverse proxy.
         APPLICATION_SECRET,
-        PROTECTION_PROFILE_ID
+        POLICY_ID
     )
 
     if not is_valid:
@@ -240,7 +240,7 @@ dotenv.load_dotenv(override=True)
 app = Flask(__name__)
 
 
-PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+POLICY_ID = os.environ["DUCKITY_POLICY_ID"]
 APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
 
 
@@ -257,7 +257,7 @@ async def protected():
         solution,
         client_ip,
         APPLICATION_SECRET,
-        PROTECTION_PROFILE_ID,
+        POLICY_ID,
     )
 
     if not is_valid:
@@ -300,7 +300,7 @@ async def protected(request):
         solution,
         client_ip,
         settings.DUCKITY_APPLICATION_SECRET,
-        settings.DUCKITY_PROTECTION_PROFILE_ID,
+        settings.DUCKITY_POLICY_ID,
     )
 
     if not is_valid:
@@ -339,7 +339,7 @@ async def protected(request, payload: RequestBodySchema):
         payload.solution,
         client_ip,
         settings.DUCKITY_APPLICATION_SECRET,
-        settings.DUCKITY_PROTECTION_PROFILE_ID,
+        settings.DUCKITY_POLICY_ID,
     )
 
     if not is_valid:
@@ -378,7 +378,7 @@ class ProtectedView(APIView):
             serializer.validated_data["solution"],
             client_ip,
             settings.DUCKITY_APPLICATION_SECRET,
-            settings.DUCKITY_PROTECTION_PROFILE_ID,
+            settings.DUCKITY_POLICY_ID,
         )
 
         if not is_valid:
@@ -405,7 +405,7 @@ import strawberry
 dotenv.load_dotenv(override=True)
 
 
-PROTECTION_PROFILE_ID = os.environ["DUCKITY_PROTECTION_PROFILE_ID"]
+POLICY_ID = os.environ["DUCKITY_POLICY_ID"]
 APPLICATION_SECRET = os.environ["DUCKITY_APPLICATION_SECRET"]
 
 
@@ -430,7 +430,7 @@ class Mutation:
             solution,
             client_ip,
             DUCKITY_APPLICATION_SECRET,
-            DUCKITY_PROTECTION_PROFILE_ID,
+            DUCKITY_POLICY_ID,
         )
 
         if not is_valid:

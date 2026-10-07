@@ -19,8 +19,8 @@ in case you want to use the `core` module later on.
 Before you can integrate Duckity into your application, you'll need to have the following:
 
 1. An application,
-2. At least one protection profile created in that application, and
-3. The ID of the protection profiles to use
+2. At least one policy created in that application, and
+3. The ID of the policies to use
 
 If you're missing either of those, head over to the [Duckity Dashboard](https://app.duckity.com) or
 read the [Quick Start](/quick-start) guide to learn how to set those up.
@@ -40,7 +40,7 @@ cargo add duckity
 To get and solve a challenge, use `duckity::solve()` like follows:
 
 ```rs
-let solution: str = duckity::solve(PROTECTION_PROFILE_ID).await?;
+let solution: str = duckity::solve(POLICY_ID).await?;
 ```
 
 That's it! Once you have your solution token, you can send it over to your backend for validation.
@@ -60,7 +60,7 @@ To validate a solution token, you'll need 4 things:
 1. The solution token,
 2. The IP of the client that submitted the solution,
 3. The application's secret, and
-4. The protection profile's ID.
+4. The policy's ID.
 
 Once you have them, you can validate a solution token as follows:
 
@@ -69,7 +69,7 @@ let is_valid: bool = duckity::validate(
     solution,
     client_ip,
     APPLICATION_SECRET,
-    PROTECTION_PROFILE_ID
+    POLICY_ID
 )
 .await?;
 ```
@@ -95,7 +95,7 @@ challenge while the user is filling up their username and password. For example:
 ```rs
 use std::io::{self, Write};
 
-const PROTECTION_PROFILE_ID: &str = "<your-own-protection-profile-id>";
+const POLICY_ID: &str = "<your-own-policy-id>";
 
 struct Credentials {
     email: String,
@@ -104,7 +104,7 @@ struct Credentials {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let solution_task = tokio::spawn(duckity::solve(PROTECTION_PROFILE_ID).into_future());
+    let solution_task = tokio::spawn(duckity::solve(POLICY_ID).into_future());
 
     let credentials = tokio::task::spawn_blocking(|| {
         let mut email = String::new();
@@ -169,11 +169,11 @@ simple. For example, the following snippet shows how to solve and validate a cha
 ```rs
 use async_compat::CompatExt;
 
-const PROTECTION_PROFILE_ID: &str = "<insert-your-protection-profile-here>";
+const POLICY_ID: &str = "<insert-your-policy-here>";
 
 fn main() -> anyhow::Result<()> {
     smol::block_on(async {
-        let solution = duckity::solve(PROTECTION_PROFILE_ID).into_future().compat().await?;
+        let solution = duckity::solve(POLICY_ID).into_future().compat().await?;
 
         Ok(())
     })
@@ -199,7 +199,7 @@ use tokio::net::TcpListener;
 
 // In an actual application, make these two configurable. `clap` is a good tool for that.
 const APPLICATION_SECRET: &str = "<your-application-secret>";
-const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+const POLICY_ID: &str = "<your-policy-id>";
 
 #[tokio::main]
 async fn main() {
@@ -229,7 +229,7 @@ async fn handler(
         payload.solution,
         addr.ip(),
         APPLICATION_SECRET,
-        PROTECTION_PROFILE_ID,
+        POLICY_ID,
     )
     .await
     .unwrap();
@@ -256,7 +256,7 @@ use warp::{Filter, Reply};
 
 // In an actual application, make these two configurable. `clap` is a good tool for that.
 const APPLICATION_SECRET: &str = "<your-application-secret>";
-const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+const POLICY_ID: &str = "<your-policy-id>";
 
 #[tokio::main]
 async fn main() {
@@ -287,7 +287,7 @@ async fn handler(
         payload.solution,
         addr.ip(),
         APPLICATION_SECRET,
-        PROTECTION_PROFILE_ID,
+        POLICY_ID,
     )
     .await
     .unwrap();
@@ -317,7 +317,7 @@ use serde::Deserialize;
 
 // In an actual application, make these two configurable. `clap` is a good tool for that.
 const APPLICATION_SECRET: &str = "<your-application-secret>";
-const PROTECTION_PROFILE_ID: &str = "<your-protection-profile-id>";
+const POLICY_ID: &str = "<your-policy-id>";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -342,7 +342,7 @@ async fn protected(req: HttpRequest, payload: Json<ProtectedRequestPayload>) -> 
         payload.solution.clone(),
         addr.ip(),
         APPLICATION_SECRET,
-        PROTECTION_PROFILE_ID,
+        POLICY_ID,
     )
     .await
     .unwrap();

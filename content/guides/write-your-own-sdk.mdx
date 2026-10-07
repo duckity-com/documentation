@@ -37,11 +37,11 @@ Duckity serves challenges through the duckling API. It's separate from the manag
 a specialized backend. The hosted endpoint of such version is at `https://api.duckity.com/d1`.
 Subsequent versions of this API will be named `d2`, `d3`, and so on.
 
-To get a challenge, you need to be able to make HTTP requests and a protection profile ID. Requests
-to get challenges look like follows:
+To get a challenge, you need to be able to make HTTP requests and a policy ID. Requests to get
+challenges look like follows:
 
 ```http
-POST /d1/challenges/{protection_profile_id}/issue HTTP/1.1
+POST /d1/challenges/{policy_id}/issue HTTP/1.1
 Host: api.duckity.com
 Accept: application/json
 ```
@@ -89,8 +89,8 @@ X-RateLimit-Penalty-Resets-In: 500
 }
 ```
 
-Other errors, like an invalid protection profile, will result in a response of similar body
-structure and with the corresponding status code.
+Other errors, like an invalid policy, will result in a response of similar body structure and with
+the corresponding status code.
 
 ## Decoding the Challenge [step]
 
@@ -109,7 +109,7 @@ type Challenge = {
     challenge_id: string; // The challenge's unique ID. 21-character NanoID using the default alphabet.
     ip: string; // The IP of the client the challenge was issued for. Only this client may submit a solution for validation.
     timestamp: number; // The milliseconds since UNIX epoch when the challenge was issued.
-    protection_profile_id: string; // The ID of the protection profile this challenge was issued for. 21-character NanoID using the default alphabet.
+    policy_id: string; // The ID of the policy this challenge was issued for. 21-character NanoID using the default alphabet.
     n: number[]; // An array of 32-bit unsigned digits, most significant digit first. The Wesolowski VDF N parameter.
     x: number[]; // An array of 32-bit unsigned digits, most significant digit first. The Wesolowski VDF X parameter.
     t: number; // The Wesolowski VDF T parameter.
@@ -128,8 +128,8 @@ These code pieces implement the decoding as a reference.
             ip: string;
             // The unix timestamp, in milliseconds, in which the challenge was issued.
             timestamp: number;
-            // The ID of the protection profile this challenge was issued for.
-            protection_profile_id: string;
+            // The ID of the policy this challenge was issued for.
+            policy_id: string;
             // The unsigned 32-bit digits of the N Wesolowski VDF parameter, most significant digit first.
             n: number[];
             // The unsigned 32-bit digits of the X Wesolowski VDF parameter, most significant digit first.
@@ -172,8 +172,8 @@ These code pieces implement the decoding as a reference.
             """The IP of the client this challenge was issued for."""
             timestamp: int
             """The UNIX timestamp in milliseconds at which this challenge was issued."""
-            protection_profile_id: str
-            """The ID of the protection profile this challenge was issued for."""
+            policy_id: str
+            """The ID of the policy this challenge was issued for."""
             n: list[int]
             """The unsigned 32-bit digits of the N Wesolowski VDF parameter, most significant digit first."""
             x: list[int]
@@ -210,7 +210,7 @@ These code pieces implement the decoding as a reference.
                     id=data["challenge_id"],
                     ip=data["ip"],
                     timestamp=data["timestamp"],
-                    protection_profile_id=data["protection_profile_id"],
+                    policy_id=data["policy_id"],
                     n=data["n"],
                     x=data["x"],
                     t=data["t"]
@@ -1078,7 +1078,7 @@ the Duckling API to check whether the token is valid.
 The request looks like follows:
 
 ```http
-POST /d1/{protection_profile_id}/validate HTTP/1.1
+POST /d1/{policy_id}/validate HTTP/1.1
 Host: api.duckity.com
 Authorization: Bearer <application-id>
 Accept: application/json
